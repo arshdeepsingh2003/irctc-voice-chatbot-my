@@ -2,25 +2,13 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from enum import Enum
 
-'''
-It tells your system:
-
-“What a user message should look like”
-“What the chatbot response should look like”
-“What types of intents and emotions are allowed”
-“How conversation history is stored”
-
-Think of it as: Rules + Structure for all data going in and out of your chatbot
-'''
-# Enums for strict intent + emotion typing 
-
 class Intent(str, Enum):
-    train_status     = "train_status"
-    pnr_status       = "pnr_status"
+    train_status      = "train_status"
+    pnr_status        = "pnr_status"
     seat_availability = "seat_availability"
-    general_query    = "general_query"
-    error            = "error"
-    unknown          = "unknown"
+    general_query     = "general_query"
+    error             = "error"
+    unknown           = "unknown"
 
 
 class Emotion(str, Enum):
@@ -30,60 +18,73 @@ class Emotion(str, Enum):
     excited  = "excited"
 
 
-# Single message in conversation history
+# Extracted entities from user message 
 
+class ExtractedEntities(BaseModel):
+    pnr_number:    Optional[str] = None   # 10-digit PNR
+    train_number:  Optional[str] = None   # 4-5 digit train number
+    station_from:  Optional[str] = None   # Source station code
+    station_to:    Optional[str] = None   # Destination station code
+    travel_date:   Optional[str] = None   # YYYY-MM-DD
+    travel_class:  Optional[str] = None   # SL, 3A, 2A, 1A, CC, EC
+    train_name:    Optional[str] = None   # e.g. "Rajdhani Express"
+
+
+# intent detection result 
+class IntentResult(BaseModel):
+    intent:     Intent
+    confidence: float              # 0.0 to 1.0
+    entities:   ExtractedEntities
+    missing:    list[str]          # What info is still needed
+    is_complete: bool              # True = ready to call API
+
+
+# Conversation message 
 class Message(BaseModel):
-    role: str          # "user" or "assistant"
+    role:    str
     content: str
 
 
-# Incoming chat request from frontend
-
+# Chat request from frontend
 class ChatRequest(BaseModel):
-    message: str = Field(
-        ...,
-        min_length=1,
-        max_length=500,
-        description="User's message to the chatbot"
-    )
-    session_id: Optional[str] = Field(
-        default="default",
-        description="Unique session ID to track conversation"
-    )
+    message:    str = Field(..., min_length=1, max_length=500)
+    session_id: Optional[str] = Field(default="default")
 
     class Config:
         json_schema_extra = {
             "example": {
-                "message": "What is the PNR status of 1234567890?",
+                "message": "PNR status of 4521367890",
                 "session_id": "user-abc-123"
             }
         }
 
 
-# Outgoing chat response to frontend 
-
+# Chat response to frontend 
 class ChatResponse(BaseModel):
-    response_text: str = Field(..., description="Human-readable reply")
-    intent: Intent     = Field(..., description="Detected intent")
-    data_required: str = Field(..., description="What data is still needed")
-    emotion: Emotion   = Field(..., description="Tone of response")
-    session_id: str    = Field(..., description="Session this reply belongs to")
+    response_text: str
+    intent:        Intent
+    data_required: str
+    emotion:       Emotion
+    session_id:    str
+    entities:      Optional[ExtractedEntities] = None   # NEW
+    is_complete:   Optional[bool] = False               # NEW
 
     class Config:
         json_schema_extra = {
             "example": {
-                "response_text": "Your PNR 1234567890 is confirmed. Seat: S4 32.",
+                "response_text": "PNR 4521367890 confirmed. Seat S4-32.",
                 "intent": "pnr_status",
                 "data_required": "none",
                 "emotion": "friendly",
-                "session_id": "user-abc-123"
+                "session_id": "user-abc-123",
+                "entities": {"pnr_number": "4521367890"},
+                "is_complete": True
             }
         }
 
 
 # History response
-
 class HistoryResponse(BaseModel):
-    session_id: str
-    messages: list[Message]
+    session_id:     str
+    messages:       list[Message]
     total_messages: int

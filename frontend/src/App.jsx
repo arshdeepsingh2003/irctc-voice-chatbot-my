@@ -43,6 +43,8 @@ export default function App() {
           intent: data.intent,
           emotion: data.emotion,
           data_required: data.data_required,
+          entities: data.entities,        // ← added
+          is_complete: data.is_complete,  // ← added
         },
       ]);
     } catch (err) {
@@ -87,9 +89,24 @@ export default function App() {
 
               {msg.role === "assistant" && (
                 <div className="meta">
-                  🎯 Intent: <b>{msg.intent}</b> &nbsp;|&nbsp;
-                  😊 Emotion: <b>{msg.emotion}</b> &nbsp;|&nbsp;
-                  📦 Needs: <b>{msg.data_required}</b>
+                  <span>🎯 <b>{msg.intent}</b></span>
+                  &nbsp;|&nbsp;
+                  <span>😊 <b>{msg.emotion}</b></span>
+                  &nbsp;|&nbsp;
+                  <span>📦 Needs: <b>{msg.data_required || "none"}</b></span>
+                  &nbsp;|&nbsp;
+                  <span>{msg.is_complete ? "✅ Ready" : "⏳ Incomplete"}</span>
+
+                  {/* Show extracted entities */}
+                  {msg.entities && Object.values(msg.entities).some(Boolean) && (
+                    <div style={{ marginTop: "6px", color: "#0057e7" }}>
+                      🔍 Extracted:{" "}
+                      {Object.entries(msg.entities)
+                        .filter(([, v]) => v)
+                        .map(([k, v]) => `${k}: ${v}`)
+                        .join(" · ")}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

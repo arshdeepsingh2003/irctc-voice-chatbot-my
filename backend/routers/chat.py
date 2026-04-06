@@ -1,6 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from models.schemas import ChatRequest, ChatResponse, HistoryResponse
 from services.chat_service import process_chat, get_history, clear_history
+from services.intent_service import detect_intent
+from pydantic import BaseModel
 
 router = APIRouter(
     prefix="/chat",
@@ -39,6 +41,39 @@ def get_chat_history(session_id: str):
 
 @router.delete("/history/{session_id}")
 def clear_chat_history(session_id: str):
-    """Clear conversation history for a session."""
+    """
+    Clear conversation history for a session.
+    """
     clear_history(session_id)
     return {"message": f"History cleared for session: {session_id}"}
+
+
+# ─── NEW: Intent debug endpoint ───────────────────────────────────
+class IntentDebugRequest(BaseModel):
+    """
+    Input model for testing intent detection.
+    """
+    message: str
+
+
+@router.post("/debug/intent")
+def debug_intent(request: IntentDebugRequest):
+    """
+    Test intent detection without calling the LLM.
+    Great for debugging entity extraction and missing fields.
+    """
+    try:
+        result = detect_intent(request.message)
+        return {
+            "message": request.message,
+            "intent": result.intent.value,
+            "confidence": result.confidence,
+            "entities": result.entities.model_dump(exclude_none=True),
+            "missing": result.missing,
+            "is_complete": result.is_complete,
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Intent detection failed: {str(e)}"
+        )
