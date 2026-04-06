@@ -1,6 +1,6 @@
 from models.schemas import ChatRequest, ChatResponse, Intent, Emotion, Message
 from typing import Dict, List
-
+from services.llm_service import get_llm_response
 '''
 Handling user messages, storing conversation, and generating a reply
 '''
@@ -29,29 +29,27 @@ def clear_history(session_id: str):
 
 
 def process_chat(request: ChatRequest) -> ChatResponse:
-    """
-    Core chat processing function.
-
-    Phase 2: Returns a structured placeholder response.
-    Phase 3: Will call Ollama LLM here.
-    Phase 4: Will detect intent here.
-    Phase 5: Will call Railway APIs here.
-    """
 
     session_id = request.session_id or "default"
     user_message = request.message.strip()
 
-    # 1. Save user message to history
+    # 1. Get history BEFORE saving new message
+    history = get_history(session_id)
+
+    # 2. Save user message
     save_message(session_id, "user", user_message)
 
-    # 2. Build response (placeholder for now)
-    response = _build_placeholder_response(user_message, session_id)
+    # 3. Call LLM
+    response = get_llm_response(
+        user_message=user_message,
+        history=history,
+        session_id=session_id
+    )
 
-    # 3. Save assistant reply to history
+    # 4. Save assistant reply to history
     save_message(session_id, "assistant", response.response_text)
 
     return response
-
 
 def _build_placeholder_response(message: str, session_id: str) -> ChatResponse:
     """
