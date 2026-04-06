@@ -1,6 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import Optional
+
+# Import your service layer
+from services.chat_service import process_chat
 
 app = FastAPI(
     title="IRCTC Voice Chatbot API",
@@ -8,18 +12,21 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS (allows React frontend to talk to this backend)
+# CORS (frontend connection)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Vite dev server
+    allow_origins=["http://localhost:5173"],  # React (Vite)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Request/Response Model
+
+# Request / Response Models
 class ChatRequest(BaseModel):
     message: str
+    session_id: Optional[str] = None  # ✅ important fix
+
 
 class ChatResponse(BaseModel):
     response_text: str
@@ -27,24 +34,25 @@ class ChatResponse(BaseModel):
     data_required: str
     emotion: str
 
-# Routes 
+
+# Routes
 @app.get("/")
 def root():
-    return {"status": "ok", "message": "IRCTC Voice Chatbot API is running 🚂"}
+    return {
+        "status": "ok",
+        "message": "IRCTC Voice Chatbot API is running 🚂"
+    }
+
 
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
 
+
+
 @app.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest):
     """
-    Phase 1: Placeholder chat endpoint.
-    We will connect Ollama LLM in Phase 3.
+    Calls the actual chatbot logic from service layer
     """
-    return ChatResponse(
-        response_text=f"You said: '{request.message}'. LLM will be connected in Phase 3!",
-        intent="general_query",
-        data_required="none",
-        emotion="friendly"
-    )
+    return process_chat(request)

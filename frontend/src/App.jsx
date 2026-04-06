@@ -1,32 +1,52 @@
 import { useState } from "react";
+import "./App.css";
 
 const API_URL = "http://localhost:8000";
+// Session ID (kept internal, NOT shown in UI)
+const SESSION_ID = "session-" + Math.random().toString(36).slice(2, 9);
 
 export default function App() {
   const [message, setMessage] = useState("");
-  const [response, setResponse] = useState(null);
+  const [chatLog, setChatLog] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const sendMessage = async () => {
     if (!message.trim()) return;
 
+    const userText = message.trim();
+    setMessage("");
     setLoading(true);
     setError(null);
+
+    setChatLog((prev) => [...prev, { role: "user", content: userText }]);
 
     try {
       const res = await fetch(`${API_URL}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({
+          message: userText,
+          session_id: SESSION_ID,
+        }),
       });
 
       if (!res.ok) throw new Error("Server error");
 
       const data = await res.json();
-      setResponse(data);
+
+      setChatLog((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: data.response_text,
+          intent: data.intent,
+          emotion: data.emotion,
+          data_required: data.data_required,
+        },
+      ]);
     } catch (err) {
-      setError("Could not connect to backend. Is it running?");
+      setError("❌ Could not reach backend. Is it running on port 8000?");
     } finally {
       setLoading(false);
     }
@@ -36,73 +56,75 @@ export default function App() {
     if (e.key === "Enter") sendMessage();
   };
 
+  const clearChat = () => setChatLog([]);
+
   return (
-    <div style={styles.container}>
-      <h1 style={styles.title}>🚂 IRCTC Voice Chatbot</h1>
-      <p style={styles.subtitle}>Your AI-powered railway assistant</p>
+    <div className="page">
+      <div className="container">
 
-      <div style={styles.inputRow}>
-        <input
-          style={styles.input}
-          type="text"
-          placeholder="Ask something... e.g. What is PNR status of 1234567890?"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={handleKeyDown}
-        />
-        <button style={styles.button} onClick={sendMessage} disabled={loading}>
-          {loading ? "..." : "Send"}
-        </button>
-      </div>
-
-      {error && <p style={styles.error}>{error}</p>}
-
-      {response && (
-        <div style={styles.responseBox}>
-          <p><strong>🤖 Bot:</strong> {response.response_text}</p>
-          <hr />
-          <p>🎯 <strong>Intent:</strong> {response.intent}</p>
-          <p>📦 <strong>Data Required:</strong> {response.data_required}</p>
-          <p>😊 <strong>Emotion:</strong> {response.emotion}</p>
+        {/* Header */}
+        <div className="header">
+          <h1 className="title">🚂 IRCTC Voice Chatbot</h1>
         </div>
-      )}
+
+        {/* Chat Log */}
+        <div className="chatBox">
+          {chatLog.length === 0 && (
+            <p className="placeholder">
+              👋 Ask me about PNR status, train status, or seat availability!
+            </p>
+          )}
+
+          {chatLog.map((msg, idx) => (
+            <div
+              key={idx}
+              className={msg.role === "user" ? "userBubble" : "botBubble"}
+            >
+              <strong>
+                {msg.role === "user" ? "🧑 You" : "🤖 Bot"}:
+              </strong>{" "}
+              {msg.content}
+
+              {msg.role === "assistant" && (
+                <div className="meta">
+                  🎯 Intent: <b>{msg.intent}</b> &nbsp;|&nbsp;
+                  😊 Emotion: <b>{msg.emotion}</b> &nbsp;|&nbsp;
+                  📦 Needs: <b>{msg.data_required}</b>
+                </div>
+              )}
+            </div>
+          ))}
+
+          {loading && (
+            <div className="botBubble">
+              <em>🤖 Bot is thinking...</em>
+            </div>
+          )}
+        </div>
+
+        {/* Error */}
+        {error && <p className="error">{error}</p>}
+
+        {/* Input Row */}
+        <div className="inputRow">
+          <input
+            className="input"
+            type="text"
+            placeholder="e.g. What is PNR status of 1234567890?"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={loading}
+          />
+          <button className="sendBtn" onClick={sendMessage} disabled={loading}>
+            {loading ? "⏳" : "Send"}
+          </button>
+          <button className="clearBtn" onClick={clearChat}>
+            Clear
+          </button>
+        </div>
+
+      </div>
     </div>
   );
 }
-
-// ─── Inline styles (will improve in Phase 11) ─────────────────────
-const styles = {
-  container: {
-    maxWidth: "700px",
-    margin: "60px auto",
-    fontFamily: "sans-serif",
-    padding: "0 20px",
-  },
-  title: { fontSize: "2rem", marginBottom: "4px" },
-  subtitle: { color: "#666", marginBottom: "24px" },
-  inputRow: { display: "flex", gap: "10px" },
-  input: {
-    flex: 1,
-    padding: "12px",
-    fontSize: "1rem",
-    border: "1px solid #ccc",
-    borderRadius: "8px",
-  },
-  button: {
-    padding: "12px 24px",
-    fontSize: "1rem",
-    background: "#0057e7",
-    color: "#fff",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-  },
-  error: { color: "red", marginTop: "12px" },
-  responseBox: {
-    marginTop: "24px",
-    padding: "16px",
-    background: "#f0f4ff",
-    borderRadius: "12px",
-    lineHeight: "1.8",
-  },
-};
