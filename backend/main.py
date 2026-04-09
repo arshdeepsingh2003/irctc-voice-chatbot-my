@@ -1,10 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import Optional
 
-# Import your service layer
-from services.chat_service import process_chat
+# Import router
+from routers import chat
 
 app = FastAPI(
     title="IRCTC Voice Chatbot API",
@@ -12,7 +10,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS (frontend connection)
+# ─── CORS (frontend connection) ────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],  # React (Vite)
@@ -21,21 +19,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ─── Include Chat Router ───────────────────────────────────────
+app.include_router(chat.router)
 
-# Request / Response Models
-class ChatRequest(BaseModel):
-    message: str
-    session_id: Optional[str] = None  # ✅ important fix
-
-
-class ChatResponse(BaseModel):
-    response_text: str
-    intent: str
-    data_required: str
-    emotion: str
-
-
-# Routes
+# ─── Basic Routes ──────────────────────────────────────────────
 @app.get("/")
 def root():
     return {
@@ -47,12 +34,3 @@ def root():
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
-
-
-
-@app.post("/chat", response_model=ChatResponse)
-def chat(request: ChatRequest):
-    """
-    Calls the actual chatbot logic from service layer
-    """
-    return process_chat(request)

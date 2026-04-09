@@ -50,10 +50,16 @@ def _extract_pnr(text: str) -> str | None:
 
 
 def _extract_train_number(text: str) -> str | None:
-    """Extract 4-5 digit train number."""
-    match = re.search(r"\b(1[0-9]{4}|[2-9]\d{3,4})\b", text)
-    return match.group(1) if match else None
+    """Extract valid Indian train numbers (5 digits only)."""
+    
+    matches = re.findall(r"\b\d{5}\b", text)
+    
+    for m in matches:
+        # Avoid matching years like 2026
+        if not (1900 <= int(m) <= 2100):
+            return m
 
+    return None
 
 def _extract_train_name(text: str) -> str | None:
     """Detect well-known train names."""
@@ -65,11 +71,16 @@ def _extract_train_name(text: str) -> str | None:
 
 
 def _extract_travel_class(text: str) -> str | None:
-    """Extract travel class from text."""
+    """Extract travel class from text (STRICT match only)."""
+    
     lower = text.lower()
+
     for keyword, code in VALID_CLASSES.items():
-        if keyword in lower:
+        # ✅ Exact word match only (no partial matching)
+        pattern = rf"\b{re.escape(keyword)}\b"
+        if re.search(pattern, lower):
             return code
+
     return None
 
 
@@ -305,13 +316,6 @@ def detect_intent(
     3. Classify intent
     4. Find missing fields
     5. Return structured IntentResult
-
-    Args:
-        message: Current user message
-        previous_entities: Entities from earlier in conversation
-
-    Returns:
-        IntentResult with intent, confidence, entities, missing fields
     """
     # Step 1: Extract from current message
     entities = extract_entities(message)
@@ -321,6 +325,12 @@ def detect_intent(
 
     # Step 3: Classify intent
     intent, confidence = _classify_intent(message)
+
+    # 🔥 STRONG CONTEXT-AWARE INTENT FIX
+    if previous_entities:
+        # If user is continuing conversation (like "12301", "tomorrow", etc.)
+        if intent in [Intent.general_query, Intent.unknown]:
+            intent = Intent.seat_availability
 
     # Step 4: Find what's missing
     missing = _find_missing(intent, merged_entities)

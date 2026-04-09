@@ -1,6 +1,9 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 from enum import Enum
+
+
+# ─── Enums ────────────────────────────────────────────────────────
 
 class Intent(str, Enum):
     train_status      = "train_status"
@@ -18,34 +21,76 @@ class Emotion(str, Enum):
     excited  = "excited"
 
 
-# Extracted entities from user message 
+# ─── Extracted entities ───────────────────────────────────────────
 
 class ExtractedEntities(BaseModel):
-    pnr_number:    Optional[str] = None   # 10-digit PNR
-    train_number:  Optional[str] = None   # 4-5 digit train number
-    station_from:  Optional[str] = None   # Source station code
-    station_to:    Optional[str] = None   # Destination station code
-    travel_date:   Optional[str] = None   # YYYY-MM-DD
-    travel_class:  Optional[str] = None   # SL, 3A, 2A, 1A, CC, EC
-    train_name:    Optional[str] = None   # e.g. "Rajdhani Express"
+    pnr_number:   Optional[str] = None
+    train_number: Optional[str] = None
+    station_from: Optional[str] = None
+    station_to:   Optional[str] = None
+    travel_date:  Optional[str] = None
+    travel_class: Optional[str] = None
+    train_name:   Optional[str] = None
 
 
-# intent detection result 
+# ─── Intent result ────────────────────────────────────────────────
+
 class IntentResult(BaseModel):
-    intent:     Intent
-    confidence: float              # 0.0 to 1.0
-    entities:   ExtractedEntities
-    missing:    list[str]          # What info is still needed
-    is_complete: bool              # True = ready to call API
+    intent:      Intent
+    confidence:  float
+    entities:    ExtractedEntities
+    missing:     List[str]
+    is_complete: bool
 
 
-# Conversation message 
+# ─── Railway API data models ──────────────────────────────────────
+
+class PNRData(BaseModel):
+    pnr_number:    str
+    train_number:  Optional[str] = None
+    train_name:    Optional[str] = None
+    doj:           Optional[str] = None   # Date of journey
+    from_station:  Optional[str] = None
+    to_station:    Optional[str] = None
+    status:        Optional[str] = None   # CNF, WL, RAC
+    passenger_count: Optional[int] = None
+    chart_prepared: Optional[bool] = None
+
+
+class TrainStatusData(BaseModel):
+    train_number:  str
+    train_name:    Optional[str] = None
+    current_station: Optional[str] = None
+    delay_minutes: Optional[int] = None
+    last_updated:  Optional[str] = None
+    status:        Optional[str] = None
+
+
+class SeatAvailabilityData(BaseModel):
+    train_number:  str
+    train_name:    Optional[str] = None
+    from_station:  Optional[str] = None
+    to_station:    Optional[str] = None
+    travel_date:   Optional[str] = None
+    travel_class:  Optional[str] = None
+    available:     Optional[int] = None
+    status:        Optional[str] = None   # AVAILABLE, WL, RAC
+
+
+class RailwayAPIResult(BaseModel):
+    success:  bool
+    intent:   Intent
+    data:     Optional[dict] = None
+    error:    Optional[str]  = None
+
+
+# ─── Conversation models ──────────────────────────────────────────
+
 class Message(BaseModel):
     role:    str
     content: str
 
 
-# Chat request from frontend
 class ChatRequest(BaseModel):
     message:    str = Field(..., min_length=1, max_length=500)
     session_id: Optional[str] = Field(default="default")
@@ -59,32 +104,18 @@ class ChatRequest(BaseModel):
         }
 
 
-# Chat response to frontend 
 class ChatResponse(BaseModel):
     response_text: str
     intent:        Intent
     data_required: str
     emotion:       Emotion
     session_id:    str
-    entities:      Optional[ExtractedEntities] = None   # NEW
-    is_complete:   Optional[bool] = False               # NEW
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "response_text": "PNR 4521367890 confirmed. Seat S4-32.",
-                "intent": "pnr_status",
-                "data_required": "none",
-                "emotion": "friendly",
-                "session_id": "user-abc-123",
-                "entities": {"pnr_number": "4521367890"},
-                "is_complete": True
-            }
-        }
+    entities:      Optional[ExtractedEntities] = None
+    is_complete:   Optional[bool] = False
+    api_data:      Optional[dict] = None     # NEW: raw API result for frontend
 
 
-# History response
 class HistoryResponse(BaseModel):
     session_id:     str
-    messages:       list[Message]
+    messages:       List[Message]
     total_messages: int
