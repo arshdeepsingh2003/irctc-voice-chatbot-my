@@ -216,13 +216,22 @@ INTENT_KEYWORDS: dict[Intent, list[tuple[str, float]]] = {
         ("rac", 0.6), ("reservation", 0.5),
     ],
     Intent.train_status: [
-        ("train status", 1.0), ("running status", 1.0),
-        ("where is train", 0.9), ("train location", 0.9),
-        ("is train late", 0.9), ("train delay", 0.8),
-        ("train running", 0.8), ("live status", 0.8),
-        ("train position", 0.8), ("arrived", 0.5),
-        ("departed", 0.5), ("platform", 0.5),
-    ],
+    ("train status", 1.0),
+    ("running status", 1.0),
+    ("running late", 1.0),
+    ("is train", 0.7),
+    ("late", 0.9),
+    ("delay", 0.9),
+    ("where is train", 0.9),
+    ("train delay", 0.8),
+    ("train location", 0.9),
+    ("train running", 0.8),
+    ("live status", 0.8),
+    ("train position", 0.8),
+    ("arrived", 0.5),
+    ("departed", 0.5),
+    ("platform", 0.5),
+],
     Intent.seat_availability: [
         ("seat availability", 1.0), ("is seat available", 1.0),
         ("available seats", 0.9), ("check availability", 0.8),
@@ -312,25 +321,33 @@ def detect_intent(
     """
     Full intent detection pipeline:
     1. Extract entities from message
-    2. Merge with previous conversation entities
-    3. Classify intent
+    2. Classify intent
+    3. Controlled context merge
     4. Find missing fields
     5. Return structured IntentResult
     """
+
     # Step 1: Extract from current message
     entities = extract_entities(message)
 
-    # Step 2: Merge with context from previous turns
-    merged_entities = _merge_with_context(entities, previous_entities)
-
-    # Step 3: Classify intent
+    # 🔥 Step 2: Classify intent FIRST
     intent, confidence = _classify_intent(message)
 
-    # 🔥 STRONG CONTEXT-AWARE INTENT FIX
+    # 🔥 Step 3: Controlled context merging
+    if previous_entities and intent in [Intent.seat_availability]:
+        merged_entities = _merge_with_context(entities, previous_entities)
+    else:
+        merged_entities = entities
+
+    # 🔥 SMART CONTEXT HANDLING (keep this AFTER classification)
     if previous_entities:
-        # If user is continuing conversation (like "12301", "tomorrow", etc.)
         if intent in [Intent.general_query, Intent.unknown]:
-            intent = Intent.seat_availability
+            if any([
+                previous_entities.train_number,
+                previous_entities.travel_date,
+                previous_entities.travel_class
+            ]):
+                intent = Intent.seat_availability
 
     # Step 4: Find what's missing
     missing = _find_missing(intent, merged_entities)
