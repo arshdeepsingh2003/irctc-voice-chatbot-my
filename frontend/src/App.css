@@ -106,33 +106,52 @@
   cursor: pointer;
 }
 
-.alertBox {
-  margin-top: 10px;
+/* 🎤 Input listening state */
+.inputListening {
+  border: 2px solid #a855f7;
+  background: #fdf4ff;
+}
+
+/* 🎤 Transcript box */
+.transcriptBox {
+  margin: 0 24px 8px;
   padding: 10px 14px;
-  background: #fff8e1;
-  border-left: 4px solid #f59e0b;
-  border-radius: 6px;
+  background: #f8f0ff;
+  border-radius: 10px;
+  border: 1px dashed #a855f7;
+  font-size: 0.9rem;
+}
+
+.transcriptLabel {
+  color: #7c3aed;
+  font-weight: 600;
+}
+
+.finalText {
+  color: #1f2937;
+}
+
+.interimText {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* 🎤 Mic error */
+.micError {
+  margin: 0 24px 8px;
+  padding: 10px 14px;
+  background: #fff1f2;
+  border-radius: 8px;
+  border: 1px solid #fecdd3;
+  color: #9f1239;
   font-size: 0.85rem;
-  color: #78350f;
 }
 
-.suggestions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.chip {
-  padding: 6px 12px;
-  background: #e8f0fe;
-  border: 1px solid #c7d7fd;
-  border-radius: 20px;
+/* 🎤 Optional: Listening badge */
+.listeningBadge {
+  background: rgba(255, 0, 0, 0.1);
+  color: red;
+  padding: 4px 10px;
+  border-radius: 12px;
   font-size: 0.8rem;
-  cursor: pointer;
-  color: #1a56db;
-}
-
-.chip:hover {
-  background: #dbeafe;
 }

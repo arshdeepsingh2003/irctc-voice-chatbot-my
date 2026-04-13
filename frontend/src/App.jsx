@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
+
+import { useSpeechRecognition } from "./hooks/useSpeechRecognition";
+import MicButton from "./components/MicButton";
 
 const API_URL = "http://localhost:8000";
 const SESSION_ID = "session-" + Math.random().toString(36).slice(2, 9);
@@ -10,10 +13,52 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const sendMessage = async () => {
-    if (!message.trim()) return;
+  // 🎤 Speech Recognition
+  const {
+    isListening,
+    transcript,
+    interimText,
+    error: micError,
+    isSupported,
+    toggleListening,
+    clearTranscript,
+  } = useSpeechRecognition({
+    language: "en-IN",
+    autoSend: false,
+  });
 
-    const userText = message.trim();
+  // ✅ Auto-fill input from voice
+  useEffect(() => {
+    if (transcript) {
+      setMessage(transcript);
+    }
+  }, [transcript]);
+
+  // ✅ Auto-send when speech stops
+  useEffect(() => {
+    if (!isListening && transcript.trim()) {
+      const timer = setTimeout(() => {
+        sendMessage(transcript.trim());
+        clearTranscript();
+      }, 700);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isListening, transcript]);
+
+  // 🚀 Send message (FINAL FIXED)
+  const sendMessage = async (customMessage) => {
+    // ✅ STOP mic if user sends manually
+    if (isListening) {
+      toggleListening();
+      clearTranscript();
+    }
+
+    const finalMessage = customMessage || message;
+
+    if (!finalMessage.trim()) return;
+
+    const userText = finalMessage.trim();
     setMessage("");
     setLoading(true);
     setError(null);
@@ -34,18 +79,19 @@ export default function App() {
 
       const data = await res.json();
 
+      // ✅ Remove unwanted icons
+      const cleanText = data.response_text.replace(/^[✨🔍🎯⚡️]+\s*/g, "");
+
       setChatLog((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: data.response_text,
+          content: cleanText,
           intent: data.intent,
           emotion: data.emotion,
           data_required: data.data_required,
           entities: data.entities,
           is_complete: data.is_complete,
-          alert: data.alert,          // NEW
-          suggestions: data.suggestions, // NEW
         },
       ]);
     } catch (err) {
@@ -61,14 +107,22 @@ export default function App() {
 
   const clearChat = () => setChatLog([]);
 
+  // 🎤 Mic click
+  const handleMicClick = () => {
+    if (loading) return;
+    toggleListening();
+  };
+
   return (
     <div className="page">
       <div className="container">
 
+        {/* Header */}
         <div className="header">
           <h1 className="title">🚂 IRCTC Voice Chatbot</h1>
         </div>
 
+        {/* Chat */}
         <div className="chatBox">
           {chatLog.length === 0 && (
             <p className="placeholder">
@@ -82,79 +136,86 @@ export default function App() {
               className={msg.role === "user" ? "userBubble" : "botBubble"}
             >
               <strong>
-                {msg.role === "user" ? "🧑 You" : "🤖 RailBot"}:
+                {msg.role === "user" ? "🧑 You" : "🤖 Bot"}:
               </strong>{" "}
               {msg.content}
 
               {msg.role === "assistant" && (
-                <>
-                  {/* Alert box */}
-                  {msg.alert && (
-                    <div className="alertBox">
-                      ⚠️ {msg.alert}
+                <div className="meta">
+                  <span>🎯 <b>{msg.intent}</b></span>
+                  &nbsp;|&nbsp;
+                  <span>😊 <b>{msg.emotion}</b></span>
+                  &nbsp;|&nbsp;
+                  <span>📦 Needs: <b>{msg.data_required || "none"}</b></span>
+                  &nbsp;|&nbsp;
+                  <span>{msg.is_complete ? "✅ Ready" : "⏳ Incomplete"}</span>
+
+                  {msg.entities && Object.values(msg.entities).some(Boolean) && (
+                    <div style={{ marginTop: "6px", color: "#0057e7" }}>
+                      🔍 Extracted:{" "}
+                      {Object.entries(msg.entities)
+                        .filter(([, v]) => v)
+                        .map(([k, v]) => `${k}: ${v}`)
+                        .join(" · ")}
                     </div>
                   )}
-
-                  {/* Suggestion chips */}
-                  {msg.suggestions && msg.suggestions.length > 0 && (
-                    <div className="suggestions">
-                      {msg.suggestions.map((s, i) => (
-                        <button
-                          key={i}
-                          className="chip"
-                          onClick={() => setMessage(s)}
-                        >
-                          {s}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Metadata */}
-                  <div className="meta">
-                    <span>🎯 <b>{msg.intent}</b></span>
-                    &nbsp;|&nbsp;
-                    <span>😊 <b>{msg.emotion}</b></span>
-                    &nbsp;|&nbsp;
-                    <span>{msg.is_complete ? "✅ Ready" : "⏳ Incomplete"}</span>
-
-                    {msg.entities && Object.values(msg.entities).some(Boolean) && (
-                      <div style={{ marginTop: "4px", color: "#0057e7" }}>
-                        🔍{" "}
-                        {Object.entries(msg.entities)
-                          .filter(([, v]) => v)
-                          .map(([k, v]) => `${k.replace(/_/g, " ")}: ${v}`)
-                          .join(" · ")}
-                      </div>
-                    )}
-                  </div>
-                </>
+                </div>
               )}
             </div>
           ))}
 
           {loading && (
             <div className="botBubble">
-              <em>🤖 RailBot is thinking...</em>
+              <em>🤖 Bot is thinking...</em>
             </div>
           )}
         </div>
 
+        {/* Errors */}
         {error && <p className="error">{error}</p>}
+        {micError && <p className="micError">🎤 {micError}</p>}
 
+        {/* 🎤 Live Transcript */}
+        {(isListening || interimText) && (
+          <div className="transcriptBox">
+            <span className="transcriptLabel">🎤 Hearing:</span>{" "}
+            <span className="finalText">{transcript}</span>
+            <span className="interimText">{interimText}</span>
+          </div>
+        )}
+
+        {/* Input Row */}
         <div className="inputRow">
-          <input
-            className="input"
-            type="text"
-            placeholder="e.g. What is PNR status of 1234567890?"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
+
+          {/* 🎤 Mic Button */}
+          <MicButton
+            isListening={isListening}
+            isSupported={isSupported}
+            onClick={handleMicClick}
             disabled={loading}
           />
-          <button className="sendBtn" onClick={sendMessage} disabled={loading}>
-            {loading ? "⏳" : "Send"}
+
+          {/* Input */}
+          <input
+            className={`input ${isListening ? "inputListening" : ""}`}
+            type="text"
+            placeholder={
+              isListening
+                ? "🎤 Listening — speak now..."
+                : "Type or click 🎤 to speak..."
+            }
+            value={isListening ? transcript + interimText : message}
+            onChange={(e) => !isListening && setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={loading}
+            readOnly={isListening}
+          />
+
+          {/* ✅ Send button WITHOUT ⏳ */}
+          <button className="sendBtn" onClick={() => sendMessage()} disabled={loading}>
+            Send
           </button>
+
           <button className="clearBtn" onClick={clearChat}>
             Clear
           </button>
