@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import "./App.css";
 
 import { useSpeechRecognition } from "./hooks/useSpeechRecognition";
+import { useSpeechSynthesis } from "./hooks/useSpeechSynthesis";
 import MicButton from "./components/MicButton";
 
 const API_URL = "http://localhost:8000";
@@ -27,6 +28,14 @@ export default function App() {
     autoSend: false,
   });
 
+  // 🔊 Text-to-Speech
+  const {
+    speak,
+    stop,
+    isSpeaking,
+    isSupported: ttsSupported,
+  } = useSpeechSynthesis();
+
   // ✅ Auto-fill input from voice
   useEffect(() => {
     if (transcript) {
@@ -44,18 +53,20 @@ export default function App() {
 
       return () => clearTimeout(timer);
     }
-  }, [isListening, transcript]);
+  }, [isListening, transcript]); // eslint-disable-line
 
-  // 🚀 Send message (FINAL FIXED)
+  // 🚀 Send message
   const sendMessage = async (customMessage) => {
-    // ✅ STOP mic if user sends manually
+    // 🔊 Stop ongoing speech
+    stop();
+
+    // 🎤 Stop mic if active
     if (isListening) {
       toggleListening();
       clearTranscript();
     }
 
     const finalMessage = customMessage || message;
-
     if (!finalMessage.trim()) return;
 
     const userText = finalMessage.trim();
@@ -79,21 +90,26 @@ export default function App() {
 
       const data = await res.json();
 
-      // ✅ Remove unwanted icons
+      // Clean unwanted symbols
       const cleanText = data.response_text.replace(/^[✨🔍🎯⚡️]+\s*/g, "");
 
-      setChatLog((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: cleanText,
-          intent: data.intent,
-          emotion: data.emotion,
-          data_required: data.data_required,
-          entities: data.entities,
-          is_complete: data.is_complete,
-        },
-      ]);
+      const botMessage = {
+        role: "assistant",
+        content: cleanText,
+        intent: data.intent,
+        emotion: data.emotion,
+        data_required: data.data_required,
+        entities: data.entities,
+        is_complete: data.is_complete,
+      };
+
+      setChatLog((prev) => [...prev, botMessage]);
+
+      // 🔊 Auto speak bot response
+      if (ttsSupported) {
+        setTimeout(() => speak(cleanText), 300);
+      }
+
     } catch (err) {
       setError("❌ Could not reach backend. Is it running on port 8000?");
     } finally {
@@ -105,9 +121,11 @@ export default function App() {
     if (e.key === "Enter") sendMessage();
   };
 
-  const clearChat = () => setChatLog([]);
+  const clearChat = () => {
+    stop();
+    setChatLog([]);
+  };
 
-  // 🎤 Mic click
   const handleMicClick = () => {
     if (loading) return;
     toggleListening();
@@ -140,6 +158,17 @@ export default function App() {
               </strong>{" "}
               {msg.content}
 
+              {/* 🔊 Replay button */}
+              {msg.role === "assistant" && ttsSupported && (
+                <button
+                  className="speakBtn"
+                  onClick={() => speak(msg.content)}
+                  title="Read aloud"
+                >
+                  🔊
+                </button>
+              )}
+
               {msg.role === "assistant" && (
                 <div className="meta">
                   <span>🎯 <b>{msg.intent}</b></span>
@@ -171,6 +200,16 @@ export default function App() {
           )}
         </div>
 
+        {/* 🔊 Speaking Indicator */}
+        {isSpeaking && (
+          <div className="speakingBar">
+            🔊 Bot is speaking...
+            <button className="stopSpeakBtn" onClick={stop}>
+              Stop
+            </button>
+          </div>
+        )}
+
         {/* Errors */}
         {error && <p className="error">{error}</p>}
         {micError && <p className="micError">🎤 {micError}</p>}
@@ -187,7 +226,6 @@ export default function App() {
         {/* Input Row */}
         <div className="inputRow">
 
-          {/* 🎤 Mic Button */}
           <MicButton
             isListening={isListening}
             isSupported={isSupported}
@@ -195,7 +233,6 @@ export default function App() {
             disabled={loading}
           />
 
-          {/* Input */}
           <input
             className={`input ${isListening ? "inputListening" : ""}`}
             type="text"
@@ -211,8 +248,11 @@ export default function App() {
             readOnly={isListening}
           />
 
-          {/* ✅ Send button WITHOUT ⏳ */}
-          <button className="sendBtn" onClick={() => sendMessage()} disabled={loading}>
+          <button
+            className="sendBtn"
+            onClick={() => sendMessage()}
+            disabled={loading}
+          >
             Send
           </button>
 
