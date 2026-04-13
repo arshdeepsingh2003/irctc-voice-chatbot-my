@@ -105,3 +105,34 @@
   border-radius: 8px;
   cursor: pointer;
 }
+
+.alertBox {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: #fff8e1;
+  border-left: 4px solid #f59e0b;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #78350f;
+}
+
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.chip {
+  padding: 6px 12px;
+  background: #e8f0fe;
+  border: 1px solid #c7d7fd;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  color: #1a56db;
+}
+
+.chip:hover {
+  background: #dbeafe;
+}

@@ -3,8 +3,6 @@ from typing import Optional, List
 from enum import Enum
 
 
-# ─── Enums ────────────────────────────────────────────────────────
-
 class Intent(str, Enum):
     train_status      = "train_status"
     pnr_status        = "pnr_status"
@@ -21,8 +19,6 @@ class Emotion(str, Enum):
     excited  = "excited"
 
 
-# ─── Extracted entities ───────────────────────────────────────────
-
 class ExtractedEntities(BaseModel):
     pnr_number:   Optional[str] = None
     train_number: Optional[str] = None
@@ -33,8 +29,6 @@ class ExtractedEntities(BaseModel):
     train_name:   Optional[str] = None
 
 
-# ─── Intent result ────────────────────────────────────────────────
-
 class IntentResult(BaseModel):
     intent:      Intent
     confidence:  float
@@ -43,48 +37,71 @@ class IntentResult(BaseModel):
     is_complete: bool
 
 
-# ─── Railway API data models ──────────────────────────────────────
-
 class PNRData(BaseModel):
-    pnr_number:    str
-    train_number:  Optional[str] = None
-    train_name:    Optional[str] = None
-    doj:           Optional[str] = None   # Date of journey
-    from_station:  Optional[str] = None
-    to_station:    Optional[str] = None
-    status:        Optional[str] = None   # CNF, WL, RAC
+    pnr_number:      str
+    train_number:    Optional[str] = None
+    train_name:      Optional[str] = None
+    doj:             Optional[str] = None
+    from_station:    Optional[str] = None
+    to_station:      Optional[str] = None
+    status:          Optional[str] = None
     passenger_count: Optional[int] = None
-    chart_prepared: Optional[bool] = None
+    chart_prepared:  Optional[bool] = None
 
 
 class TrainStatusData(BaseModel):
-    train_number:  str
-    train_name:    Optional[str] = None
+    train_number:    str
+    train_name:      Optional[str] = None
     current_station: Optional[str] = None
-    delay_minutes: Optional[int] = None
-    last_updated:  Optional[str] = None
-    status:        Optional[str] = None
+    delay_minutes:   Optional[int] = None
+    last_updated:    Optional[str] = None
+    status:          Optional[str] = None
 
 
 class SeatAvailabilityData(BaseModel):
-    train_number:  str
-    train_name:    Optional[str] = None
-    from_station:  Optional[str] = None
-    to_station:    Optional[str] = None
-    travel_date:   Optional[str] = None
-    travel_class:  Optional[str] = None
-    available:     Optional[int] = None
-    status:        Optional[str] = None   # AVAILABLE, WL, RAC
+    train_number: str
+    train_name:   Optional[str] = None
+    from_station: Optional[str] = None
+    to_station:   Optional[str] = None
+    travel_date:  Optional[str] = None
+    travel_class: Optional[str] = None
+    available:    Optional[int] = None
+    status:       Optional[str] = None
 
 
 class RailwayAPIResult(BaseModel):
-    success:  bool
-    intent:   Intent
-    data:     Optional[dict] = None
-    error:    Optional[str]  = None
+    success: bool
+    intent:  Intent
+    data:    Optional[dict] = None
+    error:   Optional[str]  = None
 
 
-# ─── Conversation models ──────────────────────────────────────────
+# ─── NEW: Formatted response before LLM ───────────────────────────
+
+class FormattedContext(BaseModel):
+    """
+    Structured context passed to LLM.
+    Contains pre-formatted data + tone guidance.
+    """
+    summary:        str            # Pre-formatted data summary
+    emotion:        Emotion        # Suggested tone
+    key_facts:      dict           # Important facts to highlight
+    alert:          Optional[str]  = None  # Warnings (delay, WL, etc.)
+
+
+# ─── NEW: Final enriched response ─────────────────────────────────
+
+class ChatResponse(BaseModel):
+    response_text: str
+    intent:        Intent
+    data_required: str
+    emotion:       Emotion
+    session_id:    str
+    entities:      Optional[ExtractedEntities] = None
+    is_complete:   Optional[bool] = False
+    api_data:      Optional[dict] = None
+    alert:         Optional[str]       = None   # NEW
+
 
 class Message(BaseModel):
     role:    str
@@ -102,17 +119,6 @@ class ChatRequest(BaseModel):
                 "session_id": "user-abc-123"
             }
         }
-
-
-class ChatResponse(BaseModel):
-    response_text: str
-    intent:        Intent
-    data_required: str
-    emotion:       Emotion
-    session_id:    str
-    entities:      Optional[ExtractedEntities] = None
-    is_complete:   Optional[bool] = False
-    api_data:      Optional[dict] = None     # NEW: raw API result for frontend
 
 
 class HistoryResponse(BaseModel):

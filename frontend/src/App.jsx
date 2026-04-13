@@ -2,7 +2,6 @@ import { useState } from "react";
 import "./App.css";
 
 const API_URL = "http://localhost:8000";
-// Session ID (kept internal, NOT shown in UI)
 const SESSION_ID = "session-" + Math.random().toString(36).slice(2, 9);
 
 export default function App() {
@@ -43,8 +42,10 @@ export default function App() {
           intent: data.intent,
           emotion: data.emotion,
           data_required: data.data_required,
-          entities: data.entities,        // ← added
-          is_complete: data.is_complete,  // ← added
+          entities: data.entities,
+          is_complete: data.is_complete,
+          alert: data.alert,          // NEW
+          suggestions: data.suggestions, // NEW
         },
       ]);
     } catch (err) {
@@ -64,12 +65,10 @@ export default function App() {
     <div className="page">
       <div className="container">
 
-        {/* Header */}
         <div className="header">
           <h1 className="title">🚂 IRCTC Voice Chatbot</h1>
         </div>
 
-        {/* Chat Log */}
         <div className="chatBox">
           {chatLog.length === 0 && (
             <p className="placeholder">
@@ -83,46 +82,66 @@ export default function App() {
               className={msg.role === "user" ? "userBubble" : "botBubble"}
             >
               <strong>
-                {msg.role === "user" ? "🧑 You" : "🤖 Bot"}:
+                {msg.role === "user" ? "🧑 You" : "🤖 RailBot"}:
               </strong>{" "}
               {msg.content}
 
               {msg.role === "assistant" && (
-                <div className="meta">
-                  <span>🎯 <b>{msg.intent}</b></span>
-                  &nbsp;|&nbsp;
-                  <span>😊 <b>{msg.emotion}</b></span>
-                  &nbsp;|&nbsp;
-                  <span>📦 Needs: <b>{msg.data_required || "none"}</b></span>
-                  &nbsp;|&nbsp;
-                  <span>{msg.is_complete ? "✅ Ready" : "⏳ Incomplete"}</span>
-
-                  {/* Show extracted entities */}
-                  {msg.entities && Object.values(msg.entities).some(Boolean) && (
-                    <div style={{ marginTop: "6px", color: "#0057e7" }}>
-                      🔍 Extracted:{" "}
-                      {Object.entries(msg.entities)
-                        .filter(([, v]) => v)
-                        .map(([k, v]) => `${k}: ${v}`)
-                        .join(" · ")}
+                <>
+                  {/* Alert box */}
+                  {msg.alert && (
+                    <div className="alertBox">
+                      ⚠️ {msg.alert}
                     </div>
                   )}
-                </div>
+
+                  {/* Suggestion chips */}
+                  {msg.suggestions && msg.suggestions.length > 0 && (
+                    <div className="suggestions">
+                      {msg.suggestions.map((s, i) => (
+                        <button
+                          key={i}
+                          className="chip"
+                          onClick={() => setMessage(s)}
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Metadata */}
+                  <div className="meta">
+                    <span>🎯 <b>{msg.intent}</b></span>
+                    &nbsp;|&nbsp;
+                    <span>😊 <b>{msg.emotion}</b></span>
+                    &nbsp;|&nbsp;
+                    <span>{msg.is_complete ? "✅ Ready" : "⏳ Incomplete"}</span>
+
+                    {msg.entities && Object.values(msg.entities).some(Boolean) && (
+                      <div style={{ marginTop: "4px", color: "#0057e7" }}>
+                        🔍{" "}
+                        {Object.entries(msg.entities)
+                          .filter(([, v]) => v)
+                          .map(([k, v]) => `${k.replace(/_/g, " ")}: ${v}`)
+                          .join(" · ")}
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
             </div>
           ))}
 
           {loading && (
             <div className="botBubble">
-              <em>🤖 Bot is thinking...</em>
+              <em>🤖 RailBot is thinking...</em>
             </div>
           )}
         </div>
 
-        {/* Error */}
         {error && <p className="error">{error}</p>}
 
-        {/* Input Row */}
         <div className="inputRow">
           <input
             className="input"

@@ -1,4 +1,6 @@
 import asyncio
+from typing import Dict, List, Optional
+
 from models.schemas import (
     ChatRequest, ChatResponse, Message,
     ExtractedEntities, Intent, Emotion
@@ -6,11 +8,11 @@ from models.schemas import (
 from services.llm_service import get_llm_response
 from services.intent_service import detect_intent, build_followup_question
 from services.railway_service import fetch_railway_data
-from typing import Dict, List, Optional
+from services.formatter_service import format_api_result
 
 # ─── In-memory stores ─────────────────────────────────────────────
-conversation_store: Dict[str, List[Message]]     = {}
-entity_store:       Dict[str, ExtractedEntities] = {}
+conversation_store: Dict[str, List[Message]] = {}
+entity_store: Dict[str, ExtractedEntities] = {}
 
 
 # ─── Helpers ──────────────────────────────────────────────────────
@@ -18,19 +20,21 @@ entity_store:       Dict[str, ExtractedEntities] = {}
 def get_history(session_id: str) -> List[Message]:
     return conversation_store.get(session_id, [])
 
+
 def save_message(session_id: str, role: str, content: str):
-    if session_id not in conversation_store:
-        conversation_store[session_id] = []
-    conversation_store[session_id].append(
+    conversation_store.setdefault(session_id, []).append(
         Message(role=role, content=content)
     )
+
 
 def clear_history(session_id: str):
     conversation_store.pop(session_id, None)
     entity_store.pop(session_id, None)
 
+
 def get_previous_entities(session_id: str) -> Optional[ExtractedEntities]:
     return entity_store.get(session_id)
+
 
 def save_entities(session_id: str, entities: ExtractedEntities):
     entity_store[session_id] = entities
@@ -40,14 +44,17 @@ def save_entities(session_id: str, entities: ExtractedEntities):
 
 async def process_chat(request: ChatRequest) -> ChatResponse:
     """
-    Full pipeline:
+    Hybrid pipeline (BEST PRACTICE):
+
     1. Intent detection + entity extraction
-    2. If incomplete → ask for missing fields (STOP here)
-    3. If complete → call Railway API
-    4. Send API result to LLM for human response
+    2. STOP if incomplete
+    3. Call Railway API
+    4. Format API result
+    5. Send structured + raw data to LLM
+    6. Return enriched response
     """
 
-    session_id   = request.session_id or "default"
+    session_id = request.session_id or "default"
     user_message = request.message.strip()
 
     # ── 1. Intent Detection ───────────────────────────────────────
@@ -61,21 +68,20 @@ async def process_chat(request: ChatRequest) -> ChatResponse:
     print(f"📦 Entities: {intent_result.entities.model_dump(exclude_none=True)}")
     print(f"❓ Missing: {intent_result.missing}")
 
-    # ── 2. Save entities + user message ──────────────────────────
+    # ── 2. Save state ────────────────────────────────────────────
     save_entities(session_id, intent_result.entities)
     history = get_history(session_id)
     save_message(session_id, "user", user_message)
 
-    # ── 🚫 3. STOP if data is incomplete ─────────────────────────
+    # ── 🚫 3. STOP if incomplete ─────────────────────────────────
     if not intent_result.is_complete:
         followup = build_followup_question(
             intent_result.intent,
             intent_result.missing
         )
 
-        response_text = followup if followup else "Please provide the required details."
+        response_text = followup or "Please provide the required details."
 
-        # Save assistant reply
         save_message(session_id, "assistant", response_text)
 
         return ChatResponse(
@@ -86,43 +92,68 @@ async def process_chat(request: ChatRequest) -> ChatResponse:
             session_id=session_id,
             entities=intent_result.entities,
             is_complete=False,
-            api_data=None
+            api_data=None,
+            alert=None
         )
 
-    # ── 4. Call Railway API (only when complete) ──────────────────
+    # ── 4. Call Railway API ──────────────────────────────────────
     api_result = None
+    formatted_context = None
+
     if intent_result.intent not in [
         Intent.general_query, Intent.error, Intent.unknown
     ]:
         print(f"🚂 Calling Railway API for: {intent_result.intent}")
+
         api_result = await fetch_railway_data(
             intent=intent_result.intent,
             entities=intent_result.entities
         )
+
         print(f"📡 API result: success={api_result.success}")
 
-    # ── 5. Build LLM prompt ──────────────────────────────────────
-    enriched = _build_enriched_prompt(
-        user_message, intent_result, api_result
+        # ── 5. Format API result ─────────────────────────────────
+        formatted_context = format_api_result(api_result)
+
+        if formatted_context:
+            print(f"📋 Summary: {formatted_context.summary[:100]}...")
+            print(f"😊 Emotion: {formatted_context.emotion}")
+
+    # ── 6. Build enriched prompt ────────────────────────────────
+    enriched_prompt = _build_enriched_prompt(
+        message=user_message,
+        intent_result=intent_result,
+        api_result=api_result,
+        ctx=formatted_context
     )
 
-    # ── 6. Get LLM response ──────────────────────────────────────
+    # ── 7. Get LLM response ─────────────────────────────────────
     llm_response = get_llm_response(
-        user_message=enriched,
+        user_message=enriched_prompt,
         history=history,
         session_id=session_id
     )
 
-    # ── 7. Attach metadata ───────────────────────────────────────
-    llm_response.intent      = intent_result.intent
-    llm_response.entities    = intent_result.entities
+    # ── 8. Apply formatter emotion (if available) ───────────────
+    if formatted_context:
+        llm_response.emotion = formatted_context.emotion
+
+    # ── 9. Attach metadata ──────────────────────────────────────
+    llm_response.intent = intent_result.intent
+    llm_response.entities = intent_result.entities
     llm_response.is_complete = True
     llm_response.data_required = "none"
+
     llm_response.api_data = (
         api_result.data if api_result else None
     )
 
-    # ── 8. Save reply ────────────────────────────────────────────
+
+    llm_response.alert = (
+        formatted_context.alert if formatted_context else None
+    )
+
+    # ── 10. Save assistant reply ────────────────────────────────
     save_message(session_id, "assistant", llm_response.response_text)
 
     return llm_response
@@ -133,9 +164,10 @@ async def process_chat(request: ChatRequest) -> ChatResponse:
 def _build_enriched_prompt(
     message: str,
     intent_result,
-    api_result
+    api_result,
+    ctx
 ) -> str:
-    """Build a rich prompt that includes API results for the LLM."""
+    """Build a SAFE + STRUCTURED + RICH prompt for LLM."""
 
     parts = [f'User asked: "{message}"']
     parts.append(f"Intent: {intent_result.intent.value}")
@@ -145,21 +177,30 @@ def _build_enriched_prompt(
     if entities:
         parts.append(f"Extracted entities: {entities}")
 
-    # ── API Context ─────────────────────────────────────────────
-    if api_result:
+    # ── Formatted Context (BEST SIGNAL) ─────────────────────────
+    if ctx:
+        parts.append(f"\nSUMMARY: {ctx.summary}")
+        parts.append(f"KEY_FACTS: {ctx.key_facts}")
+
+        if ctx.alert:
+            parts.append(f"ALERT: {ctx.alert}")
+
+    
+
+        parts.append(f"EMOTION_HINT: {ctx.emotion.value}")
+
+    # ── Raw API fallback ───────────────────────────────────────
+    elif api_result:
         if api_result.success and api_result.data:
             parts.append(f"API_DATA: {api_result.data}")
-        elif not api_result.success:
+        else:
             parts.append(f"API_ERROR: {api_result.error}")
+
+    # ── Safety guard ───────────────────────────────────────────
     else:
         parts.append(
             "IMPORTANT: No API data available. "
-            "Do NOT assume or generate any train details. "
-            "ONLY respond based on user input."
+            "Do NOT assume or generate any train details."
         )
-
-    # ── Missing Fields ──────────────────────────────────────────
-    if intent_result.missing:
-        parts.append(f"Missing info needed: {intent_result.missing}")
 
     return "\n".join(parts)
