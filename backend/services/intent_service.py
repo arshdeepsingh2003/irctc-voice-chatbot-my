@@ -44,9 +44,19 @@ DATE_KEYWORDS = {
 #   ENTITY EXTRACTION
 
 def _extract_pnr(text: str) -> str | None:
-    """Extract 10-digit PNR number."""
-    match = re.search(r"\b([2-9]\d{9})\b", text)
-    return match.group(1) if match else None
+    """Extract 10-digit PNR number"""
+
+    # ✅ Standard 10-digit PNR
+    match = re.search(r"\b\d{10}\b", text)
+    if match:
+        return match.group()
+
+    # ✅ Fallback: "12345 67890"
+    match = re.search(r"(\d{5})\s*(\d{5})", text)
+    if match:
+        return match.group(1) + match.group(2)
+
+    return None
 
 
 def _extract_train_number(text: str) -> str | None:
@@ -320,11 +330,6 @@ def detect_intent(
 ) -> IntentResult:
     """
     Full intent detection pipeline:
-    1. Extract entities from message
-    2. Classify intent
-    3. Controlled context merge
-    4. Find missing fields
-    5. Return structured IntentResult
     """
 
     # Step 1: Extract from current message
@@ -333,26 +338,29 @@ def detect_intent(
     # 🔥 Step 2: Classify intent FIRST
     intent, confidence = _classify_intent(message)
 
-    # 🔥 Step 3: Controlled context merging
-    if previous_entities and intent in [Intent.seat_availability]:
+    # 🔥 Step 3: ALWAYS merge with previous context
+    if previous_entities:
         merged_entities = _merge_with_context(entities, previous_entities)
     else:
         merged_entities = entities
 
-    # 🔥 SMART CONTEXT HANDLING (keep this AFTER classification)
+    # 🔥 Step 4: SMART CONTEXT HANDLING (FIXED)
     if previous_entities:
         if intent in [Intent.general_query, Intent.unknown]:
+
+            # If user provided ANY missing entity → continue previous flow
             if any([
-                previous_entities.train_number,
-                previous_entities.travel_date,
-                previous_entities.travel_class
+                entities.train_number,
+                entities.travel_date,
+                entities.travel_class,
+                entities.pnr_number
             ]):
                 intent = Intent.seat_availability
 
-    # Step 4: Find what's missing
+    # Step 5: Find what's missing
     missing = _find_missing(intent, merged_entities)
 
-    # Step 5: Build result
+    # Step 6: Build result
     return IntentResult(
         intent=intent,
         confidence=confidence,
