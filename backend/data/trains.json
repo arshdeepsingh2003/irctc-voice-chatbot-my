@@ -1,0 +1,1208 @@
+[
+  {
+    "trainNo": "12724",
+    "trainName": "TELANGANA EXPRESS",
+    "trainType": "SUPERFAST",
+    "fromStnCode": "NDLS",
+    "fromStnName": "New Delhi",
+    "toStnCode": "SC",
+    "toStnName": "Secunderabad Jn",
+    "departureTime": "16:00",
+    "arrivalTime": "15:55",
+    "duration": "23h 55m",
+    "daysOfRun": ["MON","TUE","WED","THU","FRI","SAT","SUN"],
+    "distance": 1667,
+    "pantryCar": true,
+    "classes": [
+      {
+        "trainClass": "1A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-4", "availableCount": 4, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 4430,
+        "tatkalFareInr": 4430
+      },
+      {
+        "trainClass": "2A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-12", "availableCount": 12, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 2575,
+        "tatkalFareInr": 3245
+      },
+      {
+        "trainClass": "SL",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "WL-15/WL-8", "availableCount": 0, "wlNumber": 8, "isSelectedDate": true, "wlPredictionPct": 78 }],
+        "fareInr": 670,
+        "tatkalFareInr": 955
+      }
+    ]
+  },
+  {
+    "trainNo": "12438",
+    "trainName": "SC RAJDHANI EXPRESS",
+    "trainType": "RAJDHANI",
+    "fromStnCode": "NZM",
+    "fromStnName": "H Nizamuddin",
+    "toStnCode": "SC",
+    "toStnName": "Secunderabad Jn",
+    "departureTime": "15:35",
+    "arrivalTime": "13:40",
+    "duration": "22h 05m",
+    "daysOfRun": ["SUN"],
+    "distance": 1660,
+    "pantryCar": true,
+    "classes": [
+      {
+        "trainClass": "2A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-10", "availableCount": 10, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 3100,
+        "tatkalFareInr": 3100
+      },
+      {
+        "trainClass": "3A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "WL-5/WL-2", "availableCount": 0, "wlNumber": 2, "isSelectedDate": true, "wlPredictionPct": 94 }],
+        "fareInr": 2300,
+        "tatkalFareInr": 2300
+      }
+    ]
+  },
+  {
+    "trainNo": "12286",
+    "trainName": "SC DURONTO EXPRESS",
+    "trainType": "DURONTO",
+    "fromStnCode": "NZM",
+    "fromStnName": "H Nizamuddin",
+    "toStnCode": "SC",
+    "toStnName": "Secunderabad Jn",
+    "departureTime": "15:55",
+    "arrivalTime": "14:35",
+    "duration": "22h 40m",
+    "daysOfRun": ["MON","FRI"],
+    "distance": 1660,
+    "pantryCar": true,
+    "classes": [
+      {
+        "trainClass": "2A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-8", "availableCount": 8, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 3620,
+        "tatkalFareInr": 3620
+      }
+    ]
+  },
+  {
+    "trainNo": "12722",
+    "trainName": "DAKSHIN EXPRESS",
+    "trainType": "MAIL/EXPRESS",
+    "fromStnCode": "NZM",
+    "fromStnName": "H Nizamuddin",
+    "toStnCode": "SC",
+    "toStnName": "Secunderabad Jn",
+    "departureTime": "22:50",
+    "arrivalTime": "02:50",
+    "duration": "28h 00m",
+    "daysOfRun": ["MON","TUE","WED","THU","FRI","SAT","SUN"],
+    "distance": 1661,
+    "pantryCar": true,
+    "classes": [
+      {
+        "trainClass": "3A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-20", "availableCount": 20, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 1895,
+        "tatkalFareInr": 2315
+      },
+      {
+        "trainClass": "SL",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-45", "availableCount": 45, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 750,
+        "tatkalFareInr": 950
+      }
+    ]
+  },
+  {
+    "trainNo": "12951",
+    "trainName": "MUMBAI CENTRAL - NEW DELHI TEJAS RAJDHANI EXPRESS",
+    "trainType": "RAJ",
+    "fromStnCode": "MMCT",
+    "fromStnName": "Mumbai Central",
+    "toStnCode": "NDLS",
+    "toStnName": "New Delhi",
+    "departureTime": "17:00",
+    "arrivalTime": "08:32",
+    "duration": "15h 32m",
+    "daysOfRun": ["MON","TUE","WED","THU","FRI","SAT","SUN"],
+    "distance": 1384,
+    "pantryCar": true,
+    "classes": [
+      {
+        "trainClass": "1A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-6", "availableCount": 6, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 5335,
+        "tatkalFareInr": 5335
+      },
+      {
+        "trainClass": "2A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-18", "availableCount": 18, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 4325,
+        "tatkalFareInr": 4325
+      },
+      {
+        "trainClass": "3A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "WL-12/WL-5", "availableCount": 0, "wlNumber": 5, "isSelectedDate": true, "wlPredictionPct": 88 }],
+        "fareInr": 3165,
+        "tatkalFareInr": 3165
+      }
+    ]
+  },
+  {
+    "trainNo": "12953",
+    "trainName": "AUGUST KRANTI TEJAS RAJDHANI EXPRESS",
+    "trainType": "RAJ",
+    "fromStnCode": "MMCT",
+    "fromStnName": "Mumbai Central",
+    "toStnCode": "NZM",
+    "toStnName": "H Nizamuddin",
+    "departureTime": "17:10",
+    "arrivalTime": "09:43",
+    "duration": "16h 33m",
+    "daysOfRun": ["MON","TUE","WED","THU","FRI","SAT","SUN"],
+    "distance": 1377,
+    "pantryCar": true,
+    "classes": [
+      {
+        "trainClass": "2A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-10", "availableCount": 10, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 4325,
+        "tatkalFareInr": 4325
+      },
+      {
+        "trainClass": "3A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-24", "availableCount": 24, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 3165,
+        "tatkalFareInr": 3165
+      }
+    ]
+  },
+  {
+    "trainNo": "12903",
+    "trainName": "GOLDEN TEMPLE MAIL",
+    "trainType": "SUPERFAST",
+    "fromStnCode": "MMCT",
+    "fromStnName": "Mumbai Central",
+    "toStnCode": "NZM",
+    "toStnName": "H Nizamuddin",
+    "departureTime": "18:45",
+    "arrivalTime": "13:50",
+    "duration": "19h 05m",
+    "daysOfRun": ["MON","TUE","WED","THU","FRI","SAT","SUN"],
+    "distance": 1377,
+    "pantryCar": true,
+    "classes": [
+      {
+        "trainClass": "2A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-4", "availableCount": 4, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 2365,
+        "tatkalFareInr": 2890
+      },
+      {
+        "trainClass": "SL",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "WL-50/WL-32", "availableCount": 0, "wlNumber": 32, "isSelectedDate": true, "wlPredictionPct": 45 }],
+        "fareInr": 655,
+        "tatkalFareInr": 845
+      }
+    ]
+  },
+  {
+    "trainNo": "22209",
+    "trainName": "MUMBAI CENTRAL - NEW DELHI DURONTO EXPRESS",
+    "trainType": "DURONTO",
+    "fromStnCode": "MMCT",
+    "fromStnName": "Mumbai Central",
+    "toStnCode": "NDLS",
+    "toStnName": "New Delhi",
+    "departureTime": "23:10",
+    "arrivalTime": "15:50",
+    "duration": "16h 40m",
+    "daysOfRun": ["MON","FRI"],
+    "distance": 1384,
+    "pantryCar": true,
+    "classes": [
+      {
+        "trainClass": "2A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-15", "availableCount": 15, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 4145,
+        "tatkalFareInr": 4145
+      },
+      {
+        "trainClass": "3A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-30", "availableCount": 30, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 3045,
+        "tatkalFareInr": 3045
+      }
+    ]
+  },
+  {
+    "trainNo": "12334",
+    "trainName": "VIBHUTI EXPRESS",
+    "trainType": "SUPERFAST",
+    "fromStnCode": "BSB",
+    "fromStnName": "Varanasi Jn",
+    "toStnCode": "HWH",
+    "toStnName": "Howrah Jn",
+    "departureTime": "18:05",
+    "arrivalTime": "07:40",
+    "duration": "13h 35m",
+    "daysOfRun": ["MON","TUE","WED","THU","FRI","SAT","SUN"],
+    "distance": 689,
+    "pantryCar": true,
+    "classes": [
+      {
+        "trainClass": "2A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-12", "availableCount": 12, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 1640,
+        "tatkalFareInr": 2100
+      },
+      {
+        "trainClass": "3A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-25", "availableCount": 25, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 1170,
+        "tatkalFareInr": 1495
+      },
+      {
+        "trainClass": "SL",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "WL-30/WL-18", "availableCount": 0, "wlNumber": 18, "isSelectedDate": true, "wlPredictionPct": 68 }],
+        "fareInr": 455,
+        "tatkalFareInr": 585
+      }
+    ]
+  },
+  {
+    "trainNo": "13006",
+    "trainName": "ASR HWH MAIL",
+    "trainType": "MAIL/EXPRESS",
+    "fromStnCode": "BSB",
+    "fromStnName": "Varanasi Jn",
+    "toStnCode": "HWH",
+    "toStnName": "Howrah Jn",
+    "departureTime": "17:00",
+    "arrivalTime": "07:30",
+    "duration": "14h 30m",
+    "daysOfRun": ["MON","TUE","WED","THU","FRI","SAT","SUN"],
+    "distance": 680,
+    "pantryCar": true,
+    "classes": [
+      {
+        "trainClass": "1A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-2", "availableCount": 2, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 2645,
+        "tatkalFareInr": 2645
+      },
+      {
+        "trainClass": "2A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-8", "availableCount": 8, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 1590,
+        "tatkalFareInr": 2040
+      },
+      {
+        "trainClass": "3A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "WL-10/WL-4", "availableCount": 0, "wlNumber": 4, "isSelectedDate": true, "wlPredictionPct": 85 }],
+        "fareInr": 1125,
+        "tatkalFareInr": 1445
+      }
+    ]
+  },
+  {
+    "trainNo": "12382",
+    "trainName": "POORVA EXPRESS",
+    "trainType": "SUPERFAST",
+    "fromStnCode": "BSB",
+    "fromStnName": "Varanasi Jn",
+    "toStnCode": "HWH",
+    "toStnName": "Howrah Jn",
+    "departureTime": "04:45",
+    "arrivalTime": "17:00",
+    "duration": "12h 15m",
+    "daysOfRun": ["MON","TUE","FRI"],
+    "distance": 677,
+    "pantryCar": true,
+    "classes": [
+      {
+        "trainClass": "2A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-15", "availableCount": 15, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 1520,
+        "tatkalFareInr": 1960
+      },
+      {
+        "trainClass": "3A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-30", "availableCount": 30, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 1085,
+        "tatkalFareInr": 1400
+      }
+    ]
+  },
+  {
+    "trainNo": "12370",
+    "trainName": "KUMBHA EXPRESS",
+    "trainType": "SUPERFAST",
+    "fromStnCode": "BSB",
+    "fromStnName": "Varanasi Jn",
+    "toStnCode": "HWH",
+    "toStnName": "Howrah Jn",
+    "departureTime": "13:20",
+    "arrivalTime": "03:15",
+    "duration": "13h 55m",
+    "daysOfRun": ["MON","TUE","WED","FRI","SAT"],
+    "distance": 689,
+    "pantryCar": true,
+    "classes": [
+      {
+        "trainClass": "2A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-6", "availableCount": 6, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 1640,
+        "tatkalFareInr": 2100
+      },
+      {
+        "trainClass": "3A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "WL-5/WL-2", "availableCount": 0, "wlNumber": 2, "isSelectedDate": true, "wlPredictionPct": 92 }],
+        "fareInr": 1170,
+        "tatkalFareInr": 1495
+      }
+    ]
+  },
+  {
+    "trainNo": "12034",
+    "trainName": "NDLS LKO SHATABDI",
+    "trainType": "SHATABDI",
+    "fromStnCode": "CNB",
+    "fromStnName": "Kanpur Central",
+    "toStnCode": "LJN",
+    "toStnName": "Lucknow Jn",
+    "departureTime": "11:25",
+    "arrivalTime": "12:30",
+    "duration": "1h 05m",
+    "daysOfRun": ["MON","TUE","WED","THU","FRI","SAT"],
+    "distance": 72,
+    "pantryCar": true,
+    "classes": [
+      {
+        "trainClass": "EC",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-12", "availableCount": 12, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 1050,
+        "tatkalFareInr": 1250
+      },
+      {
+        "trainClass": "CC",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-45", "availableCount": 45, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 560,
+        "tatkalFareInr": 710
+      }
+    ]
+  },
+  {
+    "trainNo": "12180",
+    "trainName": "LKO INTERCITY",
+    "trainType": "SUPERFAST",
+    "fromStnCode": "CNB",
+    "fromStnName": "Kanpur Central",
+    "toStnCode": "LJN",
+    "toStnName": "Lucknow Jn",
+    "departureTime": "10:50",
+    "arrivalTime": "12:25",
+    "duration": "1h 35m",
+    "daysOfRun": ["MON","TUE","WED","THU","FRI","SAT","SUN"],
+    "distance": 72,
+    "pantryCar": false,
+    "classes": [
+      {
+        "trainClass": "CC",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-28", "availableCount": 28, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 265,
+        "tatkalFareInr": 415
+      },
+      {
+        "trainClass": "2S",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-150", "availableCount": 150, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 60,
+        "tatkalFareInr": 75
+      }
+    ]
+  },
+  {
+    "trainNo": "15084",
+    "trainName": "FBD LJN EXPRESS",
+    "trainType": "MAIL/EXPRESS",
+    "fromStnCode": "CNB",
+    "fromStnName": "Kanpur Central",
+    "toStnCode": "LJN",
+    "toStnName": "Lucknow Jn",
+    "departureTime": "17:55",
+    "arrivalTime": "19:40",
+    "duration": "1h 45m",
+    "daysOfRun": ["MON","TUE","WED","THU","FRI","SAT","SUN"],
+    "distance": 72,
+    "pantryCar": false,
+    "classes": [
+      {
+        "trainClass": "3A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "WL-5/WL-2", "availableCount": 0, "wlNumber": 2, "isSelectedDate": true, "wlPredictionPct": 94 }],
+        "fareInr": 505,
+        "tatkalFareInr": 650
+      },
+      {
+        "trainClass": "SL",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-40", "availableCount": 40, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 145,
+        "tatkalFareInr": 295
+      }
+    ]
+  },
+  {
+    "trainNo": "12534",
+    "trainName": "PUSHPAK EXPRESS",
+    "trainType": "SUPERFAST",
+    "fromStnCode": "CNB",
+    "fromStnName": "Kanpur Central",
+    "toStnCode": "LJN",
+    "toStnName": "Lucknow Jn",
+    "departureTime": "07:10",
+    "arrivalTime": "08:40",
+    "duration": "1h 30m",
+    "daysOfRun": ["MON","TUE","WED","THU","FRI","SAT","SUN"],
+    "distance": 72,
+    "pantryCar": true,
+    "classes": [
+      {
+        "trainClass": "2A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-8", "availableCount": 8, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 710,
+        "tatkalFareInr": 1030
+      },
+      {
+        "trainClass": "3A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-15", "availableCount": 15, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 505,
+        "tatkalFareInr": 650
+      }
+    ]
+  },
+  {
+    "trainNo": "12956",
+    "trainName": "JP MMCT SF EXP",
+    "trainType": "SUPERFAST",
+    "fromStnCode": "JP",
+    "fromStnName": "Jaipur Jn",
+    "toStnCode": "ST",
+    "toStnName": "Surat",
+    "departureTime": "14:00",
+    "arrivalTime": "02:48",
+    "duration": "12h 48m",
+    "daysOfRun": ["MON","TUE","WED","THU","FRI","SAT","SUN"],
+    "distance": 743,
+    "pantryCar": true,
+    "classes": [
+      {
+        "trainClass": "1A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-2", "availableCount": 2, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 2845,
+        "tatkalFareInr": 2845
+      },
+      {
+        "trainClass": "2A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-8", "availableCount": 8, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 1690,
+        "tatkalFareInr": 2165
+      },
+      {
+        "trainClass": "3A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-15", "availableCount": 15, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 1195,
+        "tatkalFareInr": 1540
+      },
+      {
+        "trainClass": "SL",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "WL-20/WL-12", "availableCount": 0, "wlNumber": 12, "isSelectedDate": true, "wlPredictionPct": 74 }],
+        "fareInr": 455,
+        "tatkalFareInr": 585
+      }
+    ]
+  },
+  {
+    "trainNo": "12980",
+    "trainName": "JP BDTS SF EXP",
+    "trainType": "SUPERFAST",
+    "fromStnCode": "JP",
+    "fromStnName": "Jaipur Jn",
+    "toStnCode": "ST",
+    "toStnName": "Surat",
+    "departureTime": "20:25",
+    "arrivalTime": "09:20",
+    "duration": "12h 55m",
+    "daysOfRun": ["MON","WED","FRI"],
+    "distance": 743,
+    "pantryCar": true,
+    "classes": [
+      {
+        "trainClass": "1A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-4", "availableCount": 4, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 2845,
+        "tatkalFareInr": 2845
+      },
+      {
+        "trainClass": "2A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-10", "availableCount": 10, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 1690,
+        "tatkalFareInr": 2165
+      },
+      {
+        "trainClass": "3A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-22", "availableCount": 22, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 1195,
+        "tatkalFareInr": 1540
+      },
+      {
+        "trainClass": "3E",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-30", "availableCount": 30, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 1100,
+        "tatkalFareInr": 1400
+      },
+      {
+        "trainClass": "SL",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-50", "availableCount": 50, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 455,
+        "tatkalFareInr": 585
+      }
+    ]
+  },
+  {
+    "trainNo": "19708",
+    "trainName": "AMRAPUR ARAVALI",
+    "trainType": "MAIL/EXPRESS",
+    "fromStnCode": "JP",
+    "fromStnName": "Jaipur Jn",
+    "toStnCode": "ST",
+    "toStnName": "Surat",
+    "departureTime": "12:45",
+    "arrivalTime": "02:15",
+    "duration": "13h 30m",
+    "daysOfRun": ["MON","TUE","WED","THU","FRI","SAT","SUN"],
+    "distance": 743,
+    "pantryCar": false,
+    "classes": [
+      {
+        "trainClass": "2A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-12", "availableCount": 12, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 1645,
+        "tatkalFareInr": 2120
+      },
+      {
+        "trainClass": "3A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-25", "availableCount": 25, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 1145,
+        "tatkalFareInr": 1490
+      },
+      {
+        "trainClass": "SL",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-45", "availableCount": 45, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 420,
+        "tatkalFareInr": 540
+      }
+    ]
+  },
+  {
+    "trainNo": "20968",
+    "trainName": "VANDHE BHARAT EXP",
+    "trainType": "VB",
+    "fromStnCode": "JP",
+    "fromStnName": "Jaipur Jn",
+    "toStnCode": "ST",
+    "toStnName": "Surat",
+    "departureTime": "07:50",
+    "arrivalTime": "16:45",
+    "duration": "08h 55m",
+    "daysOfRun": ["MON","TUE","THU","FRI","SAT","SUN"],
+    "distance": 743,
+    "pantryCar": true,
+    "classes": [
+      {
+        "trainClass": "EC",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-14", "availableCount": 14, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 3140,
+        "tatkalFareInr": 3660
+      },
+      {
+        "trainClass": "CC",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "WL-5/WL-1", "availableCount": 0, "wlNumber": 1, "isSelectedDate": true, "wlPredictionPct": 96 }],
+        "fareInr": 1565,
+        "tatkalFareInr": 1965
+      }
+    ]
+  },
+  {
+    "trainNo": "12220",
+    "trainName": "SC LTT DURONTO",
+    "trainType": "DURONTO",
+    "fromStnCode": "SC",
+    "fromStnName": "Secunderabad Jn",
+    "toStnCode": "LTT",
+    "toStnName": "Lokmanya Tilak Term",
+    "departureTime": "23:05",
+    "arrivalTime": "11:00",
+    "duration": "11h 55m",
+    "daysOfRun": ["TUE","FRI"],
+    "distance": 773,
+    "pantryCar": true,
+    "classes": [
+      {
+        "trainClass": "1A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-4", "availableCount": 4, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 3150,
+        "tatkalFareInr": 3150
+      },
+      {
+        "trainClass": "2A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-12", "availableCount": 12, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 2210,
+        "tatkalFareInr": 2210
+      },
+      {
+        "trainClass": "3A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-28", "availableCount": 28, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 1585,
+        "tatkalFareInr": 1585
+      }
+    ]
+  },
+  {
+    "trainNo": "12026",
+    "trainName": "PUNE SHATABDI",
+    "trainType": "SHATABDI",
+    "fromStnCode": "SC",
+    "fromStnName": "Secunderabad Jn",
+    "toStnCode": "CSMT",
+    "toStnName": "Mumbai CSM Terminus",
+    "departureTime": "14:45",
+    "arrivalTime": "23:10",
+    "duration": "08h 25m",
+    "daysOfRun": ["MON","WED","THU","FRI","SAT","SUN"],
+    "distance": 773,
+    "pantryCar": true,
+    "classes": [
+      {
+        "trainClass": "EC",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-15", "availableCount": 15, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 2320,
+        "tatkalFareInr": 2720
+      },
+      {
+        "trainClass": "CC",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "WL-10/WL-4", "availableCount": 0, "wlNumber": 4, "isSelectedDate": true, "wlPredictionPct": 88 }],
+        "fareInr": 1185,
+        "tatkalFareInr": 1495
+      }
+    ]
+  },
+  {
+    "trainNo": "17058",
+    "trainName": "DEVAGIRI EXP",
+    "trainType": "MAIL/EXPRESS",
+    "fromStnCode": "SC",
+    "fromStnName": "Secunderabad Jn",
+    "toStnCode": "CSMT",
+    "toStnName": "Mumbai CSM Terminus",
+    "departureTime": "13:25",
+    "arrivalTime": "07:10",
+    "duration": "17h 45m",
+    "daysOfRun": ["MON","TUE","WED","THU","FRI","SAT","SUN"],
+    "distance": 878,
+    "pantryCar": true,
+    "classes": [
+      {
+        "trainClass": "2A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-6", "availableCount": 6, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 1785,
+        "tatkalFareInr": 2260
+      },
+      {
+        "trainClass": "3A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-20", "availableCount": 20, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 1255,
+        "tatkalFareInr": 1620
+      },
+      {
+        "trainClass": "SL",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-45", "availableCount": 45, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 465,
+        "tatkalFareInr": 600
+      }
+    ]
+  },
+  {
+    "trainNo": "12702",
+    "trainName": "HUSSAINSAGAR EX",
+    "trainType": "SUPERFAST",
+    "fromStnCode": "HYB",
+    "fromStnName": "Hyderabad Decan",
+    "toStnCode": "CSMT",
+    "toStnName": "Mumbai CSM Terminus",
+    "departureTime": "14:50",
+    "arrivalTime": "04:55",
+    "duration": "14h 05m",
+    "daysOfRun": ["MON","TUE","WED","THU","FRI","SAT","SUN"],
+    "distance": 790,
+    "pantryCar": false,
+    "classes": [
+      {
+        "trainClass": "2A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-10", "availableCount": 10, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 1720,
+        "tatkalFareInr": 2195
+      },
+      {
+        "trainClass": "3A",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "AVAILABLE-35", "availableCount": 35, "wlNumber": 0, "isSelectedDate": true, "wlPredictionPct": 0 }],
+        "fareInr": 1210,
+        "tatkalFareInr": 1555
+      },
+      {
+        "trainClass": "SL",
+        "availabilityMatrix": [{ "date": "{{request.query.dateOfJourney}}", "availabilityStatus": "WL-25/WL-15", "availableCount": 0, "wlNumber": 15, "isSelectedDate": true, "wlPredictionPct": 72 }],
+        "fareInr": 460,
+        "tatkalFareInr": 590
+      }
+    ]
+  },
+  {
+    "trainNo": "12423",
+    "trainName": "DIBRUGARH RAJDHANI EXPRESS",
+    "trainType": "RAJDHANI",
+    "fromStnCode": "GHY",
+    "fromStnName": "Guwahati",
+    "toStnCode": "NDLS",
+    "toStnName": "New Delhi",
+    "departureTime": "06:40",
+    "arrivalTime": "10:30",
+    "duration": "27h 50m",
+    "daysOfRun": [
+      "MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"
+    ],
+    "distance": 1903,
+    "pantryCar": true,
+    "classes": [
+      {
+        "trainClass": "1A",
+        "availabilityMatrix": [
+          {
+            "date": "{{request.query.dateOfJourney}}",
+            "availabilityStatus": "AVAILABLE-2",
+            "availableCount": 2,
+            "wlNumber": 0,
+            "isSelectedDate": true,
+            "wlPredictionPct": 0
+          }
+        ],
+        "fareInr": 6550,
+        "tatkalFareInr": 6550
+      },
+      {
+        "trainClass": "2A",
+        "availabilityMatrix": [
+          {
+            "date": "{{request.query.dateOfJourney}}",
+            "availabilityStatus": "WL-4/WL-1",
+            "availableCount": 0,
+            "wlNumber": 1,
+            "isSelectedDate": true,
+            "wlPredictionPct": 92
+          }
+        ],
+        "fareInr": 4890,
+        "tatkalFareInr": 4890
+      },
+      {
+        "trainClass": "3A",
+        "availabilityMatrix": [
+          {
+            "date": "{{request.query.dateOfJourney}}",
+            "availabilityStatus": "AVAILABLE-15",
+            "availableCount": 15,
+            "wlNumber": 0,
+            "isSelectedDate": true,
+            "wlPredictionPct": 0
+          }
+        ],
+        "fareInr": 3670,
+        "tatkalFareInr": 3670
+      }
+    ]
+  },
+  {
+    "trainNo": "12501",
+    "trainName": "POORVOTTAR SAMPARK KRANTI",
+    "trainType": "SUPERFAST",
+    "fromStnCode": "GHY",
+    "fromStnName": "Guwahati",
+    "toStnCode": "NDLS",
+    "toStnName": "New Delhi",
+    "departureTime": "06:10",
+    "arrivalTime": "13:00",
+    "duration": "30h 50m",
+    "daysOfRun": [
+      "TUE", "SAT"
+    ],
+    "distance": 1901,
+    "pantryCar": true,
+    "classes": [
+      {
+        "trainClass": "1A",
+        "availabilityMatrix": [
+          {
+            "date": "{{request.query.dateOfJourney}}",
+            "availabilityStatus": "AVAILABLE-2",
+            "availableCount": 2,
+            "wlNumber": 0,
+            "isSelectedDate": true,
+            "wlPredictionPct": 0
+          }
+        ],
+        "fareInr": 4965,
+        "tatkalFareInr": 4965
+      },
+      {
+        "trainClass": "2A",
+        "availabilityMatrix": [
+          {
+            "date": "{{request.query.dateOfJourney}}",
+            "availabilityStatus": "AVAILABLE-5",
+            "availableCount": 5,
+            "wlNumber": 0,
+            "isSelectedDate": true,
+            "wlPredictionPct": 0
+          }
+        ],
+        "fareInr": 2840,
+        "tatkalFareInr": 3365
+      },
+      {
+        "trainClass": "3A",
+        "availabilityMatrix": [
+          {
+            "date": "{{request.query.dateOfJourney}}",
+            "availabilityStatus": "AVAILABLE-12",
+            "availableCount": 12,
+            "wlNumber": 0,
+            "isSelectedDate": true,
+            "wlPredictionPct": 0
+          }
+        ],
+        "fareInr": 1960,
+        "tatkalFareInr": 2380
+      },
+      {
+        "trainClass": "SL",
+        "availabilityMatrix": [
+          {
+            "date": "{{request.query.dateOfJourney}}",
+            "availabilityStatus": "WL-20/WL-14",
+            "availableCount": 0,
+            "wlNumber": 14,
+            "isSelectedDate": true,
+            "wlPredictionPct": 78
+          }
+        ],
+        "fareInr": 745,
+        "tatkalFareInr": 960
+      }
+    ]
+  },
+  {
+    "trainNo": "15658",
+    "trainName": "BRAHMAPUTRA MAIL",
+    "trainType": "MAIL/EXPRESS",
+    "fromStnCode": "GHY",
+    "fromStnName": "Guwahati",
+    "toStnCode": "DLI",
+    "toStnName": "Old Delhi",
+    "departureTime": "14:55",
+    "arrivalTime": "04:35",
+    "duration": "37h 40m",
+    "daysOfRun": [
+      "MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"
+    ],
+    "distance": 2028,
+    "pantryCar": true,
+    "classes": [
+      {
+        "trainClass": "1A",
+        "availabilityMatrix": [
+          {
+            "date": "{{request.query.dateOfJourney}}",
+            "availabilityStatus": "AVAILABLE-1",
+            "availableCount": 1,
+            "wlNumber": 0,
+            "isSelectedDate": true,
+            "wlPredictionPct": 0
+          }
+        ],
+        "fareInr": 5150,
+        "tatkalFareInr": 5150
+      },
+      {
+        "trainClass": "2A",
+        "availabilityMatrix": [
+          {
+            "date": "{{request.query.dateOfJourney}}",
+            "availabilityStatus": "AVAILABLE-4",
+            "availableCount": 4,
+            "wlNumber": 0,
+            "isSelectedDate": true,
+            "wlPredictionPct": 0
+          }
+        ],
+        "fareInr": 3020,
+        "tatkalFareInr": 3545
+      },
+      {
+        "trainClass": "3A",
+        "availabilityMatrix": [
+          {
+            "date": "{{request.query.dateOfJourney}}",
+            "availabilityStatus": "WL-15/WL-6",
+            "availableCount": 0,
+            "wlNumber": 6,
+            "isSelectedDate": true,
+            "wlPredictionPct": 88
+          }
+        ],
+        "fareInr": 2085,
+        "tatkalFareInr": 2505
+      },
+      {
+        "trainClass": "SL",
+        "availabilityMatrix": [
+          {
+            "date": "{{request.query.dateOfJourney}}",
+            "availabilityStatus": "AVAILABLE-40",
+            "availableCount": 40,
+            "wlNumber": 0,
+            "isSelectedDate": true,
+            "wlPredictionPct": 0
+          }
+        ],
+        "fareInr": 795,
+        "tatkalFareInr": 1010
+      }
+    ]
+  },
+  {
+    "trainNo": "11464",
+    "trainName": "JBP SOMNATH EXP",
+    "trainType": "MAIL/EXPRESS",
+    "fromStnCode": "BPL",
+    "fromStnName": "Bhopal Junction",
+    "toStnCode": "ADI",
+    "toStnName": "Ahmedabad Junction",
+    "departureTime": "20:10",
+    "arrivalTime": "08:00",
+    "duration": "11h 50m",
+    "daysOfRun": [
+      "SUN",
+      "TUE",
+      "WED",
+      "THU",
+      "SAT"
+    ],
+    "distance": 630,
+    "pantryCar": true,
+    "classes": [
+      {
+        "trainClass": "1A",
+        "availabilityMatrix": [
+          {
+            "date": "{{request.query.dateOfJourney}}",
+            "availabilityStatus": "AVAILABLE-2",
+            "availableCount": 2,
+            "wlNumber": 0,
+            "isSelectedDate": true,
+            "wlPredictionPct": 0
+          }
+        ],
+        "fareInr": 2310,
+        "tatkalFareInr": 2310
+      },
+      {
+        "trainClass": "2A",
+        "availabilityMatrix": [
+          {
+            "date": "{{request.query.dateOfJourney}}",
+            "availabilityStatus": "AVAILABLE-8",
+            "availableCount": 8,
+            "wlNumber": 0,
+            "isSelectedDate": true,
+            "wlPredictionPct": 0
+          }
+        ],
+        "fareInr": 1395,
+        "tatkalFareInr": 1810
+      },
+      {
+        "trainClass": "3A",
+        "availabilityMatrix": [
+          {
+            "date": "{{request.query.dateOfJourney}}",
+            "availabilityStatus": "AVAILABLE-15",
+            "availableCount": 15,
+            "wlNumber": 0,
+            "isSelectedDate": true,
+            "wlPredictionPct": 0
+          }
+        ],
+        "fareInr": 985,
+        "tatkalFareInr": 1285
+      },
+      {
+        "trainClass": "SL",
+        "availabilityMatrix": [
+          {
+            "date": "{{request.query.dateOfJourney}}",
+            "availabilityStatus": "WL-20/WL-12",
+            "availableCount": 0,
+            "wlNumber": 12,
+            "isSelectedDate": true,
+            "wlPredictionPct": 65
+          }
+        ],
+        "fareInr": 370,
+        "tatkalFareInr": 480
+      }
+    ]
+  },
+  {
+    "trainNo": "19490",
+    "trainName": "GKP ADI EXPRESS",
+    "trainType": "MAIL/EXPRESS",
+    "fromStnCode": "SHRN",
+    "fromStnName": "Sant Hirdaram Nagar",
+    "toStnCode": "ADI",
+    "toStnName": "Ahmedabad Junction",
+    "departureTime": "17:20",
+    "arrivalTime": "04:10",
+    "duration": "10h 50m",
+    "daysOfRun": [
+      "MON",
+      "TUE",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+    ],
+    "distance": 620,
+    "pantryCar": false,
+    "classes": [
+      {
+        "trainClass": "2A",
+        "availabilityMatrix": [
+          {
+            "date": "{{request.query.dateOfJourney}}",
+            "availabilityStatus": "AVAILABLE-5",
+            "availableCount": 5,
+            "wlNumber": 0,
+            "isSelectedDate": true,
+            "wlPredictionPct": 0
+          }
+        ],
+        "fareInr": 1380,
+        "tatkalFareInr": 1795
+      },
+      {
+        "trainClass": "3A",
+        "availabilityMatrix": [
+          {
+            "date": "{{request.query.dateOfJourney}}",
+            "availabilityStatus": "AVAILABLE-22",
+            "availableCount": 22,
+            "wlNumber": 0,
+            "isSelectedDate": true,
+            "wlPredictionPct": 0
+          }
+        ],
+        "fareInr": 975,
+        "tatkalFareInr": 1270
+      },
+      {
+        "trainClass": "SL",
+        "availabilityMatrix": [
+          {
+            "date": "{{request.query.dateOfJourney}}",
+            "availabilityStatus": "AVAILABLE-35",
+            "availableCount": 35,
+            "wlNumber": 0,
+            "isSelectedDate": true,
+            "wlPredictionPct": 0
+          }
+        ],
+        "fareInr": 370,
+        "tatkalFareInr": 475
+      }
+    ]
+  },
+  {
+    "trainNo": "20940",
+    "trainName": "BSB ADI EXP",
+    "trainType": "SUPERFAST",
+    "fromStnCode": "SHRN",
+    "fromStnName": "Sant Hirdaram Nagar",
+    "toStnCode": "ADI",
+    "toStnName": "Ahmedabad Junction",
+    "departureTime": "04:45",
+    "arrivalTime": "14:00",
+    "duration": "09h 15m",
+    "daysOfRun": [
+      "WED"
+    ],
+    "distance": 620,
+    "pantryCar": true,
+    "classes": [
+      {
+        "trainClass": "2A",
+        "availabilityMatrix": [
+          {
+            "date": "{{request.query.dateOfJourney}}",
+            "availabilityStatus": "AVAILABLE-4",
+            "availableCount": 4,
+            "wlNumber": 0,
+            "isSelectedDate": true,
+            "wlPredictionPct": 0
+          }
+        ],
+        "fareInr": 1425,
+        "tatkalFareInr": 1850
+      },
+      {
+        "trainClass": "3A",
+        "availabilityMatrix": [
+          {
+            "date": "{{request.query.dateOfJourney}}",
+            "availabilityStatus": "AVAILABLE-12",
+            "availableCount": 12,
+            "wlNumber": 0,
+            "isSelectedDate": true,
+            "wlPredictionPct": 0
+          }
+        ],
+        "fareInr": 1020,
+        "tatkalFareInr": 1320
+      },
+      {
+        "trainClass": "SL",
+        "availabilityMatrix": [
+          {
+            "date": "{{request.query.dateOfJourney}}",
+            "availabilityStatus": "WL-10/WL-2",
+            "availableCount": 0,
+            "wlNumber": 2,
+            "isSelectedDate": true,
+            "wlPredictionPct": 92
+          }
+        ],
+        "fareInr": 400,
+        "tatkalFareInr": 515
+      }
+    ]
+  }
+]

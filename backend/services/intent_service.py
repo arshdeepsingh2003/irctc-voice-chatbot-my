@@ -1,11 +1,13 @@
 import re
+import difflib
 from datetime import datetime, timedelta
 from models.schemas import Intent, ExtractedEntities, IntentResult
+from services.data_service import get_all_train_names, get_all_train_numbers, get_train_number_by_name
 
 INTENT_REQUIREMENTS = {
     Intent.pnr_status:        ["pnr_number"],
     Intent.train_status:      ["train_number"],
-    Intent.seat_availability: ["train_number", "travel_date", "travel_class"],
+    Intent.seat_availability: ["train_number", "travel_date", "travel_class", "station_from", "station_to"],
     Intent.general_query:     [],
     Intent.error:             [],
     Intent.unknown:           [],
@@ -22,15 +24,37 @@ VALID_CLASSES = {
     "fc":  "FC",   "first class": "FC",
 }
 
-KNOWN_TRAINS = {
-    "rajdhani":        "12301",
-    "shatabdi":        "12001",
-    "duronto":         "12213",
-    "vande bharat":    "22439",
-    "garib rath":      "12203",
-    "jan shatabdi":    "12055",
-    "superfast":       None,   # Too generic — ask for number
-}
+# Load train data dynamically
+def _load_known_trains() -> dict[str, str]:
+    """Load train names and numbers from dataset."""
+    try:
+        names = get_all_train_names()
+        numbers = get_all_train_numbers()
+        # Create a dict of name.lower(): number
+        known = {}
+        for name, num in zip(names, numbers):
+            if name and num:
+                # Use first word or full name
+                key = name.split()[0].lower()
+                known[key] = num
+        # Add some common ones
+        known.update({
+            "rajdhani": "12301",
+            "shatabdi": "12001",
+            "duronto": "12213",
+            "superfast": None,
+        })
+        return known
+    except Exception:
+        # Fallback to hardcoded
+        return {
+            "rajdhani": "12301",
+            "shatabdi": "12001",
+            "duronto": "12213",
+            "superfast": None,
+        }
+
+KNOWN_TRAINS = _load_known_trains()
 
 
 DATE_KEYWORDS = {
@@ -72,11 +96,28 @@ def _extract_train_number(text: str) -> str | None:
     return None
 
 def _extract_train_name(text: str) -> str | None:
-    """Detect well-known train names."""
+    """Detect train names from dataset with fuzzy matching."""
     lower = text.lower()
+    # First check known trains
     for name in KNOWN_TRAINS:
-        if name in lower:
+        if name and name in lower:
             return name.title()
+    # Then check all train names from dataset
+    all_names = get_all_train_names()
+    for name in all_names:
+        if name and name in lower:
+            return name.title()
+    
+    # Fuzzy match: find phrases in text that match closely to train names
+    words = re.findall(r'\b\w+\b', lower)
+    for i in range(len(words)):
+        for j in range(i+1, len(words)+1):
+            phrase = ' '.join(words[i:j])
+            if len(phrase) > 3:  # minimum length
+                matches = difflib.get_close_matches(phrase, all_names, n=1, cutoff=0.7)
+                if matches:
+                    return matches[0].title()
+    
     return None
 
 
@@ -173,18 +214,26 @@ def _extract_stations(text: str) -> tuple[str | None, str | None]:
       - "Delhi to Mumbai"
       - "NDLS to CSTM"
     """
-    # Look for "from X to Y" or "X to Y"
+    # Look for "from X to Y" first
     match = re.search(
-        r"(?:from\s+)?([a-zA-Z ]+?)\s+to\s+([a-zA-Z ]+?)(?:\s+on|\s+in|\s+for|$|\.|,)",
+        r"from\s+([a-zA-Z ]+?)\s+to\s+([a-zA-Z ]+?)(?:\s+on|\s+in|\s+for|$|\.|,)",
         text, re.IGNORECASE
     )
+    if not match:
+        # Fallback: plain "X to Y"
+        match = re.search(
+            r"\b([A-Za-z][A-Za-z0-9 ]+?)\s+to\s+([A-Za-z][A-Za-z0-9 ]+?)(?:\s+on|\s+in|\s+for|$|\.|,)",
+            text, re.IGNORECASE
+        )
     if match:
         src = match.group(1).strip().upper()
         dst = match.group(2).strip().upper()
-        # Filter out noise words
-        noise = {"THE", "TRAIN", "A", "AN", "CHECK", "GET", "FIND", "SEAT"}
-        src = src if src not in noise and len(src) > 1 else None
-        dst = dst if dst not in noise and len(dst) > 1 else None
+        # Filter out noise words - check if any word is noise
+        noise = {"THE", "TRAIN", "A", "AN", "CHECK", "GET", "FIND", "SEAT", "I", "WANT", "TO", "AVAIALBILITY", "AVAILABILITY"}
+        src_words = set(src.split())
+        dst_words = set(dst.split())
+        src = src if not src_words & noise and len(src) > 1 else None
+        dst = dst if not dst_words & noise and len(dst) > 1 else None
         return src, dst
 
     return None, None
@@ -199,11 +248,15 @@ def extract_entities(text: str) -> ExtractedEntities:
     train_name = _extract_train_name(text)
     train_num = _extract_train_number(text)
 
-    # If we recognized a train name with a known number, use it
+    # If we recognized a train name, try to get the number
     if train_name and not train_num:
+        # First try known trains
         known_num = KNOWN_TRAINS.get(train_name.lower())
         if known_num:
             train_num = known_num
+        else:
+            # Try dataset lookup
+            train_num = get_train_number_by_name(train_name)
 
     return ExtractedEntities(
         pnr_number=_extract_pnr(text),
@@ -245,6 +298,8 @@ INTENT_KEYWORDS: dict[Intent, list[tuple[str, float]]] = {
     Intent.seat_availability: [
         ("seat availability", 1.0), ("is seat available", 1.0),
         ("available seats", 0.9), ("check availability", 0.8),
+        ("check seat", 0.8), ("check seats", 0.8), ("seat", 0.5), ("seats", 0.5),
+        ("seat for", 0.9), ("seats for", 0.9), ("availability for", 0.9), ("check seat for", 0.9), ("check seats for", 0.9),
         ("book ticket", 0.7), ("can i get", 0.6),
         ("vacancy", 0.7), ("berth available", 0.8),
         ("seats left", 0.7), ("how many seats", 0.7),
@@ -262,13 +317,17 @@ def _classify_intent(text: str) -> tuple[Intent, float]:
     """
     Score the text against all intent keywords.
     Returns the best matching intent and its confidence score.
+    Uses word boundaries to avoid matching substrings within other words.
     """
     lower = text.lower()
     scores: dict[Intent, float] = {intent: 0.0 for intent in Intent}
 
     for intent, keywords in INTENT_KEYWORDS.items():
         for keyword, weight in keywords:
-            if keyword in lower:
+            # Use word boundaries to match whole words/phrases only
+            # This prevents "hi" from matching within "DAKSHIN"
+            pattern = r'\b' + re.escape(keyword) + r'\b'
+            if re.search(pattern, lower):
                 scores[intent] = max(scores[intent], weight)
 
     best_intent = max(scores, key=scores.get)
@@ -353,14 +412,16 @@ def detect_intent(
                 entities.train_number,
                 entities.travel_date,
                 entities.travel_class,
-                entities.pnr_number
+                entities.pnr_number,
+                entities.station_from,
+                entities.station_to
             ]):
                 intent = Intent.seat_availability
 
     # Step 5: Find what's missing
     missing = _find_missing(intent, merged_entities)
 
-    # Step 6: Build result
+    # Step 7: Build result
     return IntentResult(
         intent=intent,
         confidence=confidence,
@@ -387,9 +448,14 @@ def build_followup_question(intent: Intent, missing: list[str]) -> str:
     if not missing:
         return ""
 
-    # Ask for the first missing field
-    first_missing = missing[0]
-    return questions.get(
-        first_missing,
-        f"Could you provide the {first_missing.replace('_', ' ')}?"
-    )
+    if len(missing) == 1:
+        # Ask for the single missing field
+        first_missing = missing[0]
+        return questions.get(
+            first_missing,
+            f"Could you provide the {first_missing.replace('_', ' ')}?"
+        )
+    else:
+        # Ask for all missing fields
+        field_names = [f.replace('_', ' ') for f in missing]
+        return f"Please provide the following information: {', '.join(field_names)}."
