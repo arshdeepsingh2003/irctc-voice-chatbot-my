@@ -37,22 +37,11 @@ def _load_known_trains() -> dict[str, str]:
                 # Use first word or full name
                 key = name.split()[0].lower()
                 known[key] = num
-        # Add some common ones
-        known.update({
-            "rajdhani": "12301",
-            "shatabdi": "12001",
-            "duronto": "12213",
-            "superfast": None,
-        })
+        # Don't add hardcoded entries - let multiple matching work
         return known
     except Exception:
-        # Fallback to hardcoded
-        return {
-            "rajdhani": "12301",
-            "shatabdi": "12001",
-            "duronto": "12213",
-            "superfast": None,
-        }
+        # Fallback: return empty dict - let search handle it
+        return {}
 
 KNOWN_TRAINS = _load_known_trains()
 
@@ -117,6 +106,68 @@ def _extract_train_name(text: str) -> str | None:
                 matches = difflib.get_close_matches(phrase, all_names, n=1, cutoff=0.7)
                 if matches:
                     return matches[0].title()
+    
+    return None
+
+
+def _extract_train_keyword(text: str) -> str | None:
+    """Extract generic train keyword like 'rajdhani', 'shatabdi', 'express', etc."""
+    lower = text.lower()
+    # Common train keywords to look for
+    keywords = ['rajdhani', 'shatabdi', 'duronto', 'mail', 'express', 'tejas', 'superfast']
+    for keyword in keywords:
+        if keyword in lower:
+            return keyword
+    return None
+
+
+def _is_explicit_train_reference(text: str) -> bool:
+    """Return True when the message clearly references a specific train."""
+    lower = text.lower()
+    if _extract_train_number(text):
+        return True
+    if re.search(r"\b(train|train number|train name|rajdhani|shatabdi|duronto|mail|express|tejas|superfast)\b", lower):
+        return True
+    return False
+
+
+def _extract_train_selection(text: str, train_options: list | None) -> str | None:
+    """
+    Extract user's train selection from options.
+    User can say: '12438', 'option 1', 'first one', 'SC RAJDHANI EXPRESS', etc.
+    Returns: train_number of selected train or None if invalid selection
+    """
+    if not train_options:
+        return None
+    
+    lower = text.lower()
+    
+    # Check for 5-digit train number match
+    train_num = _extract_train_number(text)
+    if train_num:
+        for train in train_options:
+            if train.get("trainNo") == train_num:
+                return train_num
+    
+    # Check for "option N" or "Nth" pattern (option 1, first, second, etc.)
+    ordinals = {"first": 0, "second": 1, "third": 2, "fourth": 3, "fifth": 4}
+    for word, idx in ordinals.items():
+        if word in lower and idx < len(train_options):
+            return train_options[idx].get("trainNo")
+    
+    # Check for "option 1" format
+    option_match = re.search(r"option\s+(\d+)", lower)
+    if option_match:
+        idx = int(option_match.group(1)) - 1  # Convert to 0-based index
+        if 0 <= idx < len(train_options):
+            return train_options[idx].get("trainNo")
+    
+    # Check for partial train name match from options
+    lower_text = lower.replace(" ", "")
+    for train in train_options:
+        train_name = train.get("trainName", "").lower().replace(" ", "")
+        if train_name and train_name in lower_text or lower_text in train_name:
+            return train.get("trainNo")
     
     return None
 
@@ -285,6 +336,7 @@ INTENT_KEYWORDS: dict[Intent, list[tuple[str, float]]] = {
     ("is train", 0.7),
     ("late", 0.9),
     ("delay", 0.9),
+    ("where is", 0.8),
     ("where is train", 0.9),
     ("train delay", 0.8),
     ("train location", 0.9),
@@ -397,11 +449,49 @@ def detect_intent(
     # 🔥 Step 2: Classify intent FIRST
     intent, confidence = _classify_intent(message)
 
+    # 🔥 Step 3: PROTECT PREVIOUS TRAIN INFO BEFORE merging
+    if previous_entities and previous_entities.train_number and not _is_explicit_train_reference(message):
+        entities.train_number = None
+        entities.train_name = None
+
     # 🔥 Step 3: ALWAYS merge with previous context
     if previous_entities:
         merged_entities = _merge_with_context(entities, previous_entities)
     else:
         merged_entities = entities
+
+    # 🔥 Step 3.4: PROTECT PREVIOUS TRAIN INFO
+    if previous_entities and previous_entities.train_number and not entities.train_number and entities.train_name:
+        if not _is_explicit_train_reference(message):
+            merged_entities.train_name = previous_entities.train_name
+
+    # 🔥 Step 3.5: HANDLE TRAIN SELECTION FROM OPTIONS (NEW)
+    # If previous context had train_options, check if user is selecting one
+    if (previous_entities and hasattr(previous_entities, 'train_options') 
+        and previous_entities.train_options):
+        selected_train_num = _extract_train_selection(message, previous_entities.train_options)
+        if selected_train_num:
+            # User selected a train - extract its full details and continue
+            merged_entities.train_number = selected_train_num
+            # Find the train name from options
+            for train_opt in previous_entities.train_options:
+                if train_opt.get("trainNo") == selected_train_num:
+                    merged_entities.train_name = train_opt.get("trainName")
+                    break
+            # Continue with seat availability flow
+            intent = Intent.seat_availability
+            # Clear train_options since user has selected
+            merged_entities.train_options = None
+    
+    # 🔥 Step 3.6: FIX TRAIN INFO WHEN WE HAVE VALID TRAIN_NUMBER (NEW)
+    # If merged_entities has a valid train_number, look up the actual train name from database
+    # This prevents fuzzy-extracted station names from overriding correct train info
+    if merged_entities.train_number:
+        from services.data_service import find_train_by_number
+        train = find_train_by_number(merged_entities.train_number)
+        if train:
+            # Use the correct train name from database
+            merged_entities.train_name = train.get("trainName")
 
     # 🔥 Step 4: SMART CONTEXT HANDLING (FIXED)
     if previous_entities:
@@ -418,7 +508,82 @@ def detect_intent(
             ]):
                 intent = Intent.seat_availability
 
-    # Step 5: Find what's missing
+    # 🔥 Step 5: CHECK FOR MULTIPLE TRAIN MATCHES
+    train_options = None
+    # Extract generic train keyword (e.g., 'rajdhani') to check for multiple matches
+    train_keyword = _extract_train_keyword(message)
+    
+    if train_keyword and (not merged_entities.train_name or merged_entities.train_name.lower() in ['rajdhani', 'shatabdi', 'duronto', 'mail', 'express', 'tejas', 'superfast']):
+        # We found a generic keyword - check if multiple trains match it
+        from services.data_service import find_trains_by_name_keyword
+        matches = find_trains_by_name_keyword(train_keyword)
+        if len(matches) > 1:
+            # Multiple trains with this keyword exist
+            # Show options to user - even if we extracted a train_number,
+            # we should let user confirm which specific train they want
+            train_options = [
+                {
+                    "trainNo": train.get("trainNo"),
+                    "trainName": train.get("trainName"),
+                    "fromStnName": train.get("fromStnName"),
+                    "toStnName": train.get("toStnName"),
+                }
+                for train in matches
+            ]
+            # Clear the train_number so we don't proceed without user choosing
+            merged_entities.train_number = None
+            if not merged_entities.train_name:
+                merged_entities.train_name = train_keyword.title()
+            merged_entities.train_options = train_options
+    
+    if merged_entities.train_name and not merged_entities.train_number and not train_options:
+        # User provided a specific train name but no number
+        # Check if multiple trains match this keyword
+        from services.data_service import find_trains_by_name_keyword
+        matches = find_trains_by_name_keyword(merged_entities.train_name)
+        print(f"    Found {len(matches)} matches for {merged_entities.train_name}")
+        if len(matches) > 1:
+            # Multiple trains match - store options
+            train_options = [
+                {
+                    "trainNo": train.get("trainNo"),
+                    "trainName": train.get("trainName"),
+                    "fromStnName": train.get("fromStnName"),
+                    "toStnName": train.get("toStnName"),
+                }
+                for train in matches
+            ]
+            merged_entities.train_options = train_options
+        elif len(matches) == 1:
+            # Single match - use it
+            merged_entities.train_number = str(matches[0].get("trainNo"))
+    elif merged_entities.train_number:
+        # We have a train number. Check if it exists in the database.
+        # If it doesn't exist, try to find alternatives using the train_name keyword
+        from services.data_service import find_train_by_number, find_trains_by_name_keyword
+        train = find_train_by_number(merged_entities.train_number)
+        if not train and merged_entities.train_name:
+            # Train number not found - look for alternatives by name
+            matches = find_trains_by_name_keyword(merged_entities.train_name)
+            if len(matches) > 1:
+                # Multiple alternatives found
+                train_options = [
+                    {
+                        "trainNo": t.get("trainNo"),
+                        "trainName": t.get("trainName"),
+                        "fromStnName": t.get("fromStnName"),
+                        "toStnName": t.get("toStnName"),
+                    }
+                    for t in matches
+                ]
+                # Clear the invalid train_number
+                merged_entities.train_number = None
+                merged_entities.train_options = train_options
+            elif len(matches) == 1:
+                # Single alternative - use it
+                merged_entities.train_number = str(matches[0].get("trainNo"))
+
+    # Step 6: Find what's missing
     missing = _find_missing(intent, merged_entities)
 
     # Step 7: Build result
@@ -427,7 +592,8 @@ def detect_intent(
         confidence=confidence,
         entities=merged_entities,
         missing=missing,
-        is_complete=(len(missing) == 0)
+        is_complete=(len(missing) == 0),
+        train_options=train_options
     )
 
 

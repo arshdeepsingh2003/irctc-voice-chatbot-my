@@ -65,13 +65,43 @@ async def process_chat(request: ChatRequest) -> ChatResponse:
     )
 
     print(f"\n🎯 Intent: {intent_result.intent} ({intent_result.confidence})")
-    print(f"📦 Entities: {intent_result.entities.model_dump(exclude_none=True)}")
-    print(f"❓ Missing: {intent_result.missing}")
+    print(f"Entities: {intent_result.entities.model_dump(exclude_none=True)}")
+    print(f"Missing: {intent_result.missing}")
+    print(f"train_options present: {intent_result.train_options is not None}")
 
     # ── 2. Save state ────────────────────────────────────────────
     save_entities(session_id, intent_result.entities)
+    print(f"Saved entities: train_options={intent_result.entities.train_options is not None}")
+    # Also preserve train_options in entities for next turn
+    if intent_result.train_options:
+        saved_entities = get_previous_entities(session_id)
+        saved_entities.train_options = intent_result.train_options
+        save_entities(session_id, saved_entities)
+        print("Re-saved with train_options")
     history = get_history(session_id)
     save_message(session_id, "user", user_message)
+
+    # ── 🚫 2.5 CHECK FOR MULTIPLE TRAIN OPTIONS ─────────────────
+    if intent_result.train_options:
+        # Multiple trains match the keyword - ask user to choose
+        options_list = "\n".join([
+            f"• {opt['trainName']} ({opt['trainNo']}) - {opt['fromStnName']} to {opt['toStnName']}"
+            for opt in intent_result.train_options
+        ])
+        response_text = f"I found multiple {intent_result.entities.train_name} trains. Please choose one:\n{options_list}"
+        
+        save_message(session_id, "assistant", response_text)
+        return ChatResponse(
+            response_text=response_text,
+            intent=intent_result.intent,
+            data_required="train_selection",
+            emotion=Emotion.friendly,
+            session_id=session_id,
+            entities=intent_result.entities,
+            is_complete=False,
+            api_data=None,
+            alert=None
+        )
 
     # ── 🚫 3. STOP if incomplete ─────────────────────────────────
     if not intent_result.is_complete:

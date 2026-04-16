@@ -11,13 +11,13 @@ def _load_data() -> list[dict]:
     try:
         with open(DATA_PATH, "r", encoding="utf-8") as f:
             data = json.load(f)
-            print(f"✅ Loaded {len(data)} trains from dataset")
+            print(f"Loaded {len(data)} trains from dataset")
             return data
     except FileNotFoundError:
-        print(f"❌ trains.json not found at {DATA_PATH}")
+        print(f"trains.json not found at {DATA_PATH}")
         return []
     except json.JSONDecodeError as e:
-        print(f"❌ Invalid JSON in trains.json: {e}")
+        print(f"Invalid JSON in trains.json: {e}")
         return []
 
 TRAINS_DB: list[dict] = _load_data()
@@ -293,6 +293,19 @@ def get_train_number_by_name(train_name: str) -> str | None:
         for train in TRAINS_DB:
             if train.get("trainName", "").lower() == closest:
                 return str(train.get("trainNo", ""))
+
+
+def find_trains_by_name_keyword(keyword: str) -> list[dict]:
+    """Find all trains matching a keyword in their name or type."""
+    keyword_lower = keyword.lower().strip()
+    results = []
+    for train in TRAINS_DB:
+        train_name = train.get("trainName", "").lower()
+        train_type = train.get("trainType", "").lower()
+        if keyword_lower in train_name or keyword_lower in train_type:
+            results.append(train)
+    return results
+
     
     return None
 

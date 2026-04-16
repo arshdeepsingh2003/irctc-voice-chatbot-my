@@ -27,6 +27,7 @@ class ExtractedEntities(BaseModel):
     travel_date:  Optional[str] = None
     travel_class: Optional[str] = None
     train_name:   Optional[str] = None
+    train_options: Optional[List[dict]] = None  # Multiple train options to choose from
 
 
 class IntentResult(BaseModel):
@@ -35,6 +36,7 @@ class IntentResult(BaseModel):
     entities:    ExtractedEntities
     missing:     List[str]
     is_complete: bool
+    train_options: Optional[List[dict]] = None  # For when multiple trains match a keyword
 
 
 class PNRData(BaseModel):
