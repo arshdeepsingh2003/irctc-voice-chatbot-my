@@ -100,6 +100,7 @@ class ChatResponse(BaseModel):
     emotion:       Emotion
     session_id:    str
     entities:      Optional[ExtractedEntities] = None
+    train_options: Optional[List[dict]] = None
     is_complete:   Optional[bool] = False
     api_data:      Optional[dict] = None
     alert:         Optional[str]       = None   # NEW

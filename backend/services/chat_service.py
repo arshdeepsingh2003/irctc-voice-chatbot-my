@@ -13,6 +13,7 @@ from services.formatter_service import format_api_result
 # ─── In-memory stores ─────────────────────────────────────────────
 conversation_store: Dict[str, List[Message]] = {}
 entity_store: Dict[str, ExtractedEntities] = {}
+intent_store: Dict[str, Intent] = {}
 
 
 # ─── Helpers ──────────────────────────────────────────────────────
@@ -30,6 +31,7 @@ def save_message(session_id: str, role: str, content: str):
 def clear_history(session_id: str):
     conversation_store.pop(session_id, None)
     entity_store.pop(session_id, None)
+    intent_store.pop(session_id, None)
 
 
 def get_previous_entities(session_id: str) -> Optional[ExtractedEntities]:
@@ -38,6 +40,14 @@ def get_previous_entities(session_id: str) -> Optional[ExtractedEntities]:
 
 def save_entities(session_id: str, entities: ExtractedEntities):
     entity_store[session_id] = entities
+
+
+def get_previous_intent(session_id: str) -> Optional[Intent]:
+    return intent_store.get(session_id)
+
+
+def save_intent(session_id: str, intent: Intent):
+    intent_store[session_id] = intent
 
 
 # ─── Main pipeline ────────────────────────────────────────────────
@@ -59,9 +69,11 @@ async def process_chat(request: ChatRequest) -> ChatResponse:
 
     # ── 1. Intent Detection ───────────────────────────────────────
     previous_entities = get_previous_entities(session_id)
+    previous_intent = get_previous_intent(session_id)
     intent_result = detect_intent(
         message=user_message,
-        previous_entities=previous_entities
+        previous_entities=previous_entities,
+        previous_intent=previous_intent
     )
 
     print(f"\n🎯 Intent: {intent_result.intent} ({intent_result.confidence})")
@@ -71,6 +83,7 @@ async def process_chat(request: ChatRequest) -> ChatResponse:
 
     # ── 2. Save state ────────────────────────────────────────────
     save_entities(session_id, intent_result.entities)
+    save_intent(session_id, intent_result.intent)
     print(f"Saved entities: train_options={intent_result.entities.train_options is not None}")
     # Also preserve train_options in entities for next turn
     if intent_result.train_options:
@@ -85,8 +98,8 @@ async def process_chat(request: ChatRequest) -> ChatResponse:
     if intent_result.train_options:
         # Multiple trains match the keyword - ask user to choose
         options_list = "\n".join([
-            f"• {opt['trainName']} ({opt['trainNo']}) - {opt['fromStnName']} to {opt['toStnName']}"
-            for opt in intent_result.train_options
+            f"{i+1}. {opt['trainName']} ({opt['trainNo']}) - {opt['fromStnName']} to {opt['toStnName']}"
+            for i, opt in enumerate(intent_result.train_options)
         ])
         response_text = f"I found multiple {intent_result.entities.train_name} trains. Please choose one:\n{options_list}"
         
@@ -98,6 +111,7 @@ async def process_chat(request: ChatRequest) -> ChatResponse:
             emotion=Emotion.friendly,
             session_id=session_id,
             entities=intent_result.entities,
+            train_options=intent_result.train_options,
             is_complete=False,
             api_data=None,
             alert=None

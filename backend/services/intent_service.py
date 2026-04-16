@@ -34,10 +34,10 @@ def _load_known_trains() -> dict[str, str]:
         known = {}
         for name, num in zip(names, numbers):
             if name and num:
-                # Use first word or full name
-                key = name.split()[0].lower()
+                # Use first word or full name if first word is short
+                first_word = name.split()[0].lower()
+                key = first_word if len(first_word) > 3 else name.lower()
                 known[key] = num
-        # Don't add hardcoded entries - let multiple matching work
         return known
     except Exception:
         # Fallback: return empty dict - let search handle it
@@ -126,9 +126,28 @@ def _is_explicit_train_reference(text: str) -> bool:
     lower = text.lower()
     if _extract_train_number(text):
         return True
-    if re.search(r"\b(train|train number|train name|rajdhani|shatabdi|duronto|mail|express|tejas|superfast)\b", lower):
+    if re.search(r"\b(train number|train name|train no|train|pnr|coach|seat)\b", lower):
         return True
     return False
+
+
+def _is_partial_train_name_reference(text: str, train_name: str) -> bool:
+    """Return True when the user text is a partial/generic reference to a longer train name."""
+    lower_text = text.lower()
+    lower_name = train_name.lower()
+    if lower_name in lower_text:
+        return False
+
+    stopwords = {"the", "a", "an", "to", "from", "where", "is", "please", "show", "find", "get", "me", "for", "train", "express", "rajdhani", "shatabdi", "duronto", "mail", "tejas", "superfast"}
+    text_words = set(re.findall(r"\b\w+\b", lower_text)) - stopwords
+    name_words = set(re.findall(r"\b\w+\b", lower_name)) - stopwords
+
+    return bool(text_words) and text_words.issubset(name_words) and len(name_words) > len(text_words)
+
+
+def _message_contains_full_train_name(text: str, train_name: str) -> bool:
+    """Return True when the user message contains the exact full train name."""
+    return train_name.lower() in text.lower()
 
 
 def _extract_train_selection(text: str, train_options: list | None) -> str | None:
@@ -162,6 +181,13 @@ def _extract_train_selection(text: str, train_options: list | None) -> str | Non
         if 0 <= idx < len(train_options):
             return train_options[idx].get("trainNo")
     
+    # Check for direct number (1, 2, 3, etc.)
+    number_match = re.search(r"\b(\d+)\b", text.strip())
+    if number_match and len(number_match.group(1)) == 1:  # Only single digit to avoid train numbers
+        idx = int(number_match.group(1)) - 1
+        if 0 <= idx < len(train_options):
+            return train_options[idx].get("trainNo")
+    
     # Check for partial train name match from options
     lower_text = lower.replace(" ", "")
     for train in train_options:
@@ -186,6 +212,14 @@ def _extract_travel_class(text: str) -> str | None:
     return None
 
 
+def _is_valid_travel_date(date_obj: datetime) -> bool:
+    """Return True for today through 120 days from today."""
+    today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    latest = today + timedelta(days=120)
+    target = date_obj.replace(hour=0, minute=0, second=0, microsecond=0)
+    return today <= target <= latest
+
+
 def _extract_date(text: str) -> str | None:
     """
     Extract travel date from text.
@@ -202,21 +236,30 @@ def _extract_date(text: str) -> str | None:
     for keyword, offset in DATE_KEYWORDS.items():
         if keyword in lower:
             target = today + timedelta(days=offset)
-            return target.strftime("%Y-%m-%d")
+            if _is_valid_travel_date(target):
+                return target.strftime("%Y-%m-%d")
+            return None
 
     # DD/MM/YYYY or DD-MM-YYYY
     match = re.search(r"\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})\b", text)
     if match:
         d, m, y = match.groups()
         try:
-            return datetime(int(y), int(m), int(d)).strftime("%Y-%m-%d")
+            candidate = datetime(int(y), int(m), int(d))
+            if _is_valid_travel_date(candidate):
+                return candidate.strftime("%Y-%m-%d")
         except ValueError:
             pass
 
     # YYYY-MM-DD
     match = re.search(r"\b(\d{4})-(\d{2})-(\d{2})\b", text)
     if match:
-        return match.group(0)
+        try:
+            candidate = datetime(int(match.group(1)), int(match.group(2)), int(match.group(3)))
+            if _is_valid_travel_date(candidate):
+                return match.group(0)
+        except ValueError:
+            pass
 
     # "15 june" or "june 15" or "15th june"
     months = {
@@ -237,7 +280,8 @@ def _extract_date(text: str) -> str | None:
                 candidate = datetime(year, month_num, day)
                 if candidate < today:
                     candidate = datetime(year + 1, month_num, day)
-                return candidate.strftime("%Y-%m-%d")
+                if _is_valid_travel_date(candidate):
+                    return candidate.strftime("%Y-%m-%d")
             except ValueError:
                 pass
 
@@ -250,7 +294,8 @@ def _extract_date(text: str) -> str | None:
                 candidate = datetime(year, month_num, day)
                 if candidate < today:
                     candidate = datetime(year + 1, month_num, day)
-                return candidate.strftime("%Y-%m-%d")
+                if _is_valid_travel_date(candidate):
+                    return candidate.strftime("%Y-%m-%d")
             except ValueError:
                 pass
 
@@ -437,7 +482,8 @@ def _merge_with_context(
 
 def detect_intent(
     message: str,
-    previous_entities: ExtractedEntities | None = None
+    previous_entities: ExtractedEntities | None = None,
+    previous_intent: Intent | None = None
 ) -> IntentResult:
     """
     Full intent detection pipeline:
@@ -478,8 +524,8 @@ def detect_intent(
                 if train_opt.get("trainNo") == selected_train_num:
                     merged_entities.train_name = train_opt.get("trainName")
                     break
-            # Continue with seat availability flow
-            intent = Intent.seat_availability
+            # User selected a train - continue with train status flow
+            intent = Intent.train_status
             # Clear train_options since user has selected
             merged_entities.train_options = None
     
@@ -494,27 +540,37 @@ def detect_intent(
             merged_entities.train_name = train.get("trainName")
 
     # 🔥 Step 4: SMART CONTEXT HANDLING (FIXED)
-    if previous_entities:
-        if intent in [Intent.general_query, Intent.unknown]:
-
-            # If user provided ANY missing entity → continue previous flow
-            if any([
-                entities.train_number,
-                entities.travel_date,
-                entities.travel_class,
-                entities.pnr_number,
-                entities.station_from,
-                entities.station_to
-            ]):
-                intent = Intent.seat_availability
-
+    if previous_intent:
+        # If previous intent was incomplete and user is providing missing info, continue with previous intent
+        previous_missing = _find_missing(previous_intent, previous_entities or ExtractedEntities())
+        if previous_missing and any([
+            entities.train_number,
+            entities.travel_date,
+            entities.travel_class,
+            entities.pnr_number,
+            entities.station_from,
+            entities.station_to
+        ]):
+            intent = previous_intent
     # 🔥 Step 5: CHECK FOR MULTIPLE TRAIN MATCHES
     train_options = None
     # Extract generic train keyword (e.g., 'rajdhani') to check for multiple matches
     train_keyword = _extract_train_keyword(message)
     
-    if train_keyword and (not merged_entities.train_name or merged_entities.train_name.lower() in ['rajdhani', 'shatabdi', 'duronto', 'mail', 'express', 'tejas', 'superfast']):
-        # We found a generic keyword - check if multiple trains match it
+    ambiguous_train_family = (
+        merged_entities.train_name and
+        train_keyword and
+        train_keyword in merged_entities.train_name.lower() and
+        not _message_contains_full_train_name(message, merged_entities.train_name)
+    )
+
+    if train_keyword and (
+        not merged_entities.train_name or
+        merged_entities.train_name.lower() in ['rajdhani', 'shatabdi', 'duronto', 'mail', 'express', 'tejas', 'superfast'] or
+        ambiguous_train_family or
+        (merged_entities.train_name and _is_partial_train_name_reference(message, merged_entities.train_name))
+    ):
+        # We found a generic or ambiguous train reference - check if multiple trains match it
         from services.data_service import find_trains_by_name_keyword
         matches = find_trains_by_name_keyword(train_keyword)
         if len(matches) > 1:
@@ -541,7 +597,6 @@ def detect_intent(
         # Check if multiple trains match this keyword
         from services.data_service import find_trains_by_name_keyword
         matches = find_trains_by_name_keyword(merged_entities.train_name)
-        print(f"    Found {len(matches)} matches for {merged_entities.train_name}")
         if len(matches) > 1:
             # Multiple trains match - store options
             train_options = [
@@ -605,7 +660,7 @@ def build_followup_question(intent: Intent, missing: list[str]) -> str:
     questions = {
         "pnr_number":   "Could you please share your 10-digit PNR number?",
         "train_number": "Could you share the train number? (e.g., 12301 for Rajdhani Express)",
-        "travel_date":  "What date are you travelling? (e.g., tomorrow, 25 June, or 2025-06-25)",
+        "travel_date":  "What date are you travelling? Please provide today or a future date within the next 120 days.",
         "travel_class": "Which class? (SL - Sleeper, 3A - Third AC, 2A - Second AC, CC - Chair Car)",
         "station_from": "Which station are you departing from?",
         "station_to":   "Which station are you travelling to?",
