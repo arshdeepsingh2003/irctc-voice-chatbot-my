@@ -302,6 +302,33 @@ def _extract_date(text: str) -> str | None:
     return None
 
 
+def _contains_date_reference(text: str) -> bool:
+    """Return True when the user message contains a date-like reference."""
+    lower = text.lower()
+    months = (
+        "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug",
+        "sep", "oct", "nov", "dec",
+        "january", "february", "march", "april", "june", "july",
+        "august", "september", "october", "november", "december"
+    )
+
+    if any(keyword in lower for keyword in ["today", "tomorrow", "day after", "tonight"]):
+        return True
+
+    if re.search(r"\b\d{1,2}[\/\-]\d{1,2}(?:[\/\-]\d{2,4})?\b", lower):
+        return True
+    if re.search(r"\b\d{4}-\d{2}-\d{2}\b", lower):
+        return True
+
+    for month_name in months:
+        if re.search(rf"\b\d{{1,2}}(?:st|nd|rd|th)?\s+{month_name}\b", lower):
+            return True
+        if re.search(rf"\b{month_name}\s+\d{{1,2}}(?:st|nd|rd|th)?\b", lower):
+            return True
+
+    return False
+
+
 def _extract_stations(text: str) -> tuple[str | None, str | None]:
     """
     Extract source and destination station codes or names.
@@ -549,7 +576,8 @@ def detect_intent(
             entities.travel_class,
             entities.pnr_number,
             entities.station_from,
-            entities.station_to
+            entities.station_to,
+            _contains_date_reference(message)
         ]):
             intent = previous_intent
     # 🔥 Step 5: CHECK FOR MULTIPLE TRAIN MATCHES
@@ -660,7 +688,7 @@ def build_followup_question(intent: Intent, missing: list[str]) -> str:
     questions = {
         "pnr_number":   "Could you please share your 10-digit PNR number?",
         "train_number": "Could you share the train number? (e.g., 12301 for Rajdhani Express)",
-        "travel_date":  "What date are you travelling? Please provide today or a future date within the next 120 days.",
+        "travel_date":  "Please enter today’s date or a future date within 120 days.",
         "travel_class": "Which class? (SL - Sleeper, 3A - Third AC, 2A - Second AC, CC - Chair Car)",
         "station_from": "Which station are you departing from?",
         "station_to":   "Which station are you travelling to?",

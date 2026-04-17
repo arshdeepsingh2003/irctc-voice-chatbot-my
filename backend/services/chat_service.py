@@ -1,5 +1,6 @@
 import asyncio
 from typing import Dict, List, Optional
+import re
 
 from models.schemas import (
     ChatRequest, ChatResponse, Message,
@@ -14,6 +15,33 @@ from services.formatter_service import format_api_result
 conversation_store: Dict[str, List[Message]] = {}
 entity_store: Dict[str, ExtractedEntities] = {}
 intent_store: Dict[str, Intent] = {}
+
+
+def _contains_date_reference(text: str) -> bool:
+    """Return True when the user message contains a date-like reference."""
+    lower = text.lower()
+    months = (
+        "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug",
+        "sep", "oct", "nov", "dec",
+        "january", "february", "march", "april", "june", "july",
+        "august", "september", "october", "november", "december"
+    )
+
+    if any(keyword in lower for keyword in ["today", "tomorrow", "day after", "tonight"]):
+        return True
+
+    if re.search(r"\b\d{1,2}[\/\-]\d{1,2}(?:[\/\-]\d{2,4})?\b", lower):
+        return True
+    if re.search(r"\b\d{4}-\d{2}-\d{2}\b", lower):
+        return True
+
+    for month_name in months:
+        if re.search(rf"\b\d{{1,2}}(?:st|nd|rd|th)?\s+{month_name}\b", lower):
+            return True
+        if re.search(rf"\b{month_name}\s+\d{{1,2}}(?:st|nd|rd|th)?\b", lower):
+            return True
+
+    return False
 
 
 # ─── Helpers ──────────────────────────────────────────────────────
@@ -124,7 +152,11 @@ async def process_chat(request: ChatRequest) -> ChatResponse:
             intent_result.missing
         )
 
-        response_text = followup or "Please provide the required details."
+        # Special handling for invalid travel date
+        if "travel_date" in intent_result.missing and _contains_date_reference(user_message):
+            response_text = "That date is invalid. Please enter today's date or a future date within 120 days."
+        else:
+            response_text = followup or "Please provide the required details."
 
         save_message(session_id, "assistant", response_text)
 
