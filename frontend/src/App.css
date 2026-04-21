@@ -1,214 +1,349 @@
-/* ───────── Page ───────── */
+/* ── Page ── */
 .page {
-  background: linear-gradient(135deg, #f0f4ff 0%, #e8f5e9 100%);
+  background: #eef0f8;
   min-height: 100vh;
   padding: 30px 16px;
   font-family: 'Segoe UI', sans-serif;
 }
 
-/* ───────── Container ───────── */
+/* ── Container ── */
 .container {
   max-width: 720px;
   margin: 0 auto;
   background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
+  border-radius: 20px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.13);
   overflow: hidden;
 }
 
-/* ───────── Header ───────── */
+/* ── Header ── */
 .header {
-  background: linear-gradient(135deg, #0057e7, #0041b0);
-  color: white;
-  padding: 20px 24px;
+  background: linear-gradient(135deg, #5b5fc7 0%, #4a4db5 100%);
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.trainGraphic {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 55%;
+  height: 100%;
+  background: url('./assets/train-bg.png') no-repeat right center / cover;
+  opacity: 0.18;
+  pointer-events: none;
+  mask-image: linear-gradient(to right, transparent 0%, black 40%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 40%);
+}
+
+.headerIcon {
+  width: 46px; height: 46px;
+  background: rgba(255,255,255,0.18);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
 }
 
 .title {
   margin: 0;
-  font-size: 1.4rem;
+  font-size: 1.15rem;
   font-weight: 700;
+  color: #fff;
 }
 
-/* ───────── Chat Box ───────── */
+.subtitle {
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.82);
+}
+
+/* ── Chat Box ── */
 .chatBox {
   padding: 20px 24px;
-  min-height: 320px;
-  max-height: 420px;
+  min-height: 340px;
+  max-height: 430px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
+  background: #f7f8fc;
 }
 
-/* Empty text */
 .placeholder {
   text-align: center;
   color: #9ca3af;
-  font-size: 0.95rem;
+  font-size: 0.93rem;
+  margin: auto;
 }
 
-/* ───────── Chat Bubbles ───────── */
-.userBubble {
-  background: #e8f0fe;
-  padding: 12px 16px;
-  border-radius: 16px 16px 4px 16px;
-  align-self: flex-end;
-  max-width: 80%;
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
-
-.botBubble {
-  background: #f0fdf4;
-  padding: 12px 16px;
-  border-radius: 16px 16px 16px 4px;
-  align-self: flex-start;
-  max-width: 85%;
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
-
-/* ───────── Meta Info ───────── */
-.meta {
-  margin-top: 8px;
-  font-size: 0.75rem;
-  color: #6b7280;
-  border-top: 1px solid #e5e7eb;
-  padding-top: 6px;
-}
-
-/* ───────── Replay Button ───────── */
-.speakBtn {
-  margin-left: 10px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  color: #374151;
-}
-
-.speakBtn:hover {
-  transform: scale(1.1);
-}
-
-/* ───────── Speaking Bar ───────── */
-.speakingBar {
-  margin: 10px 20px;
-  padding: 8px 12px;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  border-radius: 8px;
-  font-size: 13px;
-  color: #166534;
+/* ── User Row ── */
+.userRow {
   display: flex;
-  align-items: center;
+  justify-content: flex-end;
+  align-items: flex-end;
   gap: 10px;
 }
 
+.userAvatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: #e0e3f0;
+  display: flex; align-items: center; justify-content: center;
+  color: #7c7fad;
+  flex-shrink: 0;
+}
+
+.userBubbleWrap { max-width: 68%; }
+
+.userSender {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #5b5fc7;
+  margin-bottom: 4px;
+  text-align: right;
+}
+
+.userBubble {
+  background: #fff;
+  border: 1px solid #e0e3f0;
+  padding: 12px 16px;
+  border-radius: 18px 18px 4px 18px;
+  font-size: 0.93rem;
+  line-height: 1.5;
+  color: #1f2937;
+}
+
+.timestamp {
+  font-size: 0.7rem;
+  color: #9ca3af;
+  text-align: right;
+  margin-top: 4px;
+}
+
+/* ── Bot Row ── */
+.botRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.botAvatar {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #5b5fc7, #8185e8);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.botContent { flex: 1; min-width: 0; }
+
+.botHeader {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 6px;
+}
+
+.botName {
+  font-weight: 700;
+  color: #5b5fc7;
+  font-size: 0.88rem;
+}
+
+.verifiedBadge {
+  width: 16px; height: 16px;
+  background: #5b5fc7;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px;
+  color: white;
+  flex-shrink: 0;
+}
+.verifiedBadge::after { content: '✓'; }
+
+.botTime {
+  font-size: 0.7rem;
+  color: #9ca3af;
+}
+
+.botBubble {
+  background: #fff;
+  border: 1px solid #e0e3f0;
+  padding: 14px 40px 14px 16px;
+  border-radius: 4px 18px 18px 18px;
+  font-size: 0.93rem;
+  line-height: 1.6;
+  color: #1f2937;
+  max-width: 90%;
+  position: relative;
+
+}
+
+/* ── Typing indicator ── */
+.typing {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  padding: 14px 18px;
+}
+.typing span {
+  width: 8px; height: 8px;
+  background: #8185e8;
+  border-radius: 50%;
+  animation: bounce 1.2s infinite;
+  display: inline-block;
+}
+.typing span:nth-child(2) { animation-delay: 0.2s; }
+.typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+  40% { transform: translateY(-6px); opacity: 1; }
+}
+
+/* ── Speak button ── */
+.speakBtn {
+  position: absolute;
+  bottom: 8px;
+  right: 10px;
+
+  background: rgba(0,0,0,0.04);
+  border: none;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: all 0.2s;
+}
+
+.speakBtn:hover {
+  opacity: 1;
+  background: rgba(91,95,199,0.1);
+}
+
+
+.entities {
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: #5b5fc7;
+}
+
+/* ── Quick Actions ── */
+.quickActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;   /* ⭐ CENTER */
+  align-items: center;       /* ⭐ VERTICAL ALIGN */
+  padding: 14px 24px;
+  background: #f7f8fc;
+  border-top: 1px solid #eaecf0;
+}
+
+.quickBtn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px;
+  border: 1.5px solid #e0e3f0;
+  border-radius: 20px;
+  background: #fff;
+  font-size: 0.82rem;
+  color: #4a4db5;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.15s, border-color 0.15s;
+}
+.quickBtn:hover { background: #eef0fb; border-color: #a5a8e8; }
+
+/* ── Speaking Bar ── */
+.speakingBar {
+  margin: 0 20px 6px;
+  padding: 8px 14px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  font-size: 13px; color: #166534;
+  display: flex; align-items: center; gap: 10px;
+}
 .stopSpeakBtn {
   margin-left: auto;
   background: #dcfce7;
   border: 1px solid #bbf7d0;
   border-radius: 6px;
   padding: 4px 10px;
-  cursor: pointer;
-  font-size: 0.8rem;
+  cursor: pointer; font-size: 0.8rem;
 }
+.stopSpeakBtn:hover { background: #bbf7d0; }
 
-.stopSpeakBtn:hover {
-  background: #bbf7d0;
-}
-
-/* ───────── Transcript ───────── */
-.transcriptBox {
-  margin: 0 24px 10px;
-  padding: 10px 14px;
-  background: #f8f0ff;
-  border-radius: 10px;
-  border: 1px dashed #a855f7;
-  font-size: 0.9rem;
-}
-
-.transcriptLabel {
-  color: #7c3aed;
-  font-weight: 600;
-}
-
-.finalText {
-  color: #1f2937;
-}
-
-.interimText {
-  color: #9ca3af;
-  font-style: italic;
-}
-
-/* ───────── Errors ───────── */
-.error {
-  color: #dc2626;
-  padding: 6px 24px;
-  font-size: 0.88rem;
-}
-
+/* ── Errors ── */
+.error { color: #dc2626; padding: 6px 24px; font-size: 0.88rem; }
 .micError {
   margin: 0 24px 8px;
   padding: 10px 14px;
   background: #fff1f2;
   border-radius: 8px;
   border: 1px solid #fecdd3;
-  color: #9f1239;
-  font-size: 0.85rem;
+  color: #9f1239; font-size: 0.85rem;
 }
 
-/* ───────── Input Row ───────── */
+/* ── Transcript ── */
+.transcriptBox {
+  margin: 0 24px 8px;
+  padding: 10px 14px;
+  background: #f8f0ff;
+  border-radius: 10px;
+  border: 1px dashed #a855f7;
+  font-size: 0.9rem;
+}
+.transcriptLabel { color: #7c3aed; font-weight: 600; }
+.finalText { color: #1f2937; }
+.interimText { color: #9ca3af; font-style: italic; }
+
+/* ── Input Row ── */
 .inputRow {
-  display: flex;
-  gap: 8px;
-  padding: 14px 24px;
-  border-top: 1px solid #f0f0f0;
+  display: flex; gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid #eaecf0;
   align-items: center;
+  background: #fff;
 }
 
-/* Input */
 .input {
   flex: 1;
-  padding: 12px 16px;
-  font-size: 0.95rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
+  padding: 12px 18px;
+  font-size: 0.93rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 24px;
   outline: none;
-  transition: 0.2s;
+  background: #f9fafc;
+  transition: border-color 0.2s, background 0.2s;
+  color: #374151;
 }
+.input:focus { border-color: #8185e8; background: #fff; }
+.inputListening { border: 1.5px solid #a855f7; background: #fdf4ff; }
 
-.inputListening {
-  border: 2px solid #a855f7;
-  background: #fdf4ff;
-}
-
-/* Send Button */
 .sendBtn {
-  padding: 10px 16px;
-  background: #0057e7;
-  color: white;
+  display: flex; align-items: center; gap: 6px;
+  padding: 11px 20px;
+  background: linear-gradient(135deg, #5b5fc7, #8185e8);
+  color: #fff;
   border: none;
-  border-radius: 10px;
-  cursor: pointer;
+  border-radius: 22px;
+  font-size: 0.93rem;
   font-weight: 600;
-}
-
-.sendBtn:hover {
-  background: #0041b0;
-}
-
-/* Clear Button */
-.clearBtn {
-  padding: 10px;
-  background: #f3f4f6;
-  border: none;
-  border-radius: 10px;
   cursor: pointer;
+  transition: opacity 0.2s;
 }
-
-.clearBtn:hover {
-  background: #e5e7eb;
-}
+.sendBtn:hover { opacity: 0.9; }
+.sendBtn:disabled { opacity: 0.6; cursor: not-allowed; }

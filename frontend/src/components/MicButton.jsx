@@ -6,7 +6,6 @@ export default function MicButton({
   onClick,
   disabled = false,
 }) {
-
   const pulseRef = useRef(null);
 
   // Pulse animation while listening
@@ -21,7 +20,11 @@ export default function MicButton({
 
   if (!isSupported) {
     return (
-      <button style={styles.unsupported} disabled title="Not supported in this browser">
+      <button
+        style={styles.unsupported}
+        disabled
+        title="Not supported in this browser"
+      >
         🎤
       </button>
     );
@@ -29,24 +32,22 @@ export default function MicButton({
 
   return (
     <>
-      {/* Inject keyframe animation */}
+      {/* Animations */}
       <style>{`
         @keyframes pulse {
-          0%   { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
-          70%  { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
-          100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+          0%   { box-shadow: 0 0 0 0 rgba(168,85,247,0.4); }
+          70%  { box-shadow: 0 0 0 12px rgba(168,85,247,0); }
+          100% { box-shadow: 0 0 0 0 rgba(168,85,247,0); }
         }
         @keyframes ripple {
-          0%   { transform: scale(1); opacity: 1; }
-          100% { transform: scale(2); opacity: 0; }
+          0%   { transform: scale(1); opacity: 0.6; }
+          100% { transform: scale(2.2); opacity: 0; }
         }
       `}</style>
 
       <div style={styles.wrapper}>
-        {/* Ripple ring when listening */}
-        {isListening && (
-          <div style={styles.ripple} />
-        )}
+        {/* Ripple effect */}
+        {isListening && <div style={styles.ripple} />}
 
         <button
           ref={pulseRef}
@@ -59,7 +60,7 @@ export default function MicButton({
             ...(disabled ? styles.disabledBtn : {}),
           }}
         >
-          {isListening ? "⏹" : "🎤"}
+          🎤
         </button>
       </div>
     </>
@@ -68,56 +69,64 @@ export default function MicButton({
 
 const styles = {
   wrapper: {
-    position:    "relative",
-    display:     "inline-flex",
-    alignItems:  "center",
+    position: "relative",
+    display: "inline-flex",
+    alignItems: "center",
     justifyContent: "center",
   },
+
   button: {
-    width:        "48px",
-    height:       "48px",
+    width: "44px",
+    height: "44px",
     borderRadius: "50%",
-    border:       "none",
-    fontSize:     "1.2rem",
-    cursor:       "pointer",
-    transition:   "all 0.2s ease",
-    display:      "flex",
-    alignItems:   "center",
+    border: "none",
+    fontSize: "18px",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
     justifyContent: "center",
-    position:     "relative",
-    zIndex:       1,
+    flexShrink: 0,
+    transition: "all 0.2s ease",
+    position: "relative",
+    zIndex: 1,
   },
+
+  // 🎯 MATCHED TO YOUR FIRST DESIGN
   idle: {
-    background:  "#0057e7",
-    color:       "#fff",
-    boxShadow:   "0 2px 8px rgba(0,87,231,0.4)",
+    background: "linear-gradient(135deg,#5b5fc7,#8185e8)",
+    color: "#fff",
+    boxShadow: "0 4px 14px rgba(91,95,199,0.4)",
   },
+
   listening: {
-    background:  "#ef4444",
-    color:       "#fff",
-    boxShadow:   "0 0 0 0 rgba(239,68,68,0.5)",
+    background: "linear-gradient(135deg,#a855f7,#c084fc)",
+    color: "#fff",
+    boxShadow: "0 0 0 4px rgba(168,85,247,0.25)",
   },
-  unsupported: {
-    width:        "48px",
-    height:       "48px",
-    borderRadius: "50%",
-    border:       "1px solid #ddd",
-    background:   "#f5f5f5",
-    cursor:       "not-allowed",
-    fontSize:     "1.2rem",
-    opacity:      0.5,
-  },
+
   ripple: {
-    position:     "absolute",
-    width:        "48px",
-    height:       "48px",
+    position: "absolute",
+    width: "44px",
+    height: "44px",
     borderRadius: "50%",
-    background:   "rgba(239, 68, 68, 0.3)",
-    animation:    "ripple 1.5s ease-out infinite",
-    zIndex:       0,
+    background: "rgba(168,85,247,0.25)",
+    animation: "ripple 1.5s ease-out infinite",
+    zIndex: 0,
   },
+
+  unsupported: {
+    width: "44px",
+    height: "44px",
+    borderRadius: "50%",
+    border: "1px solid #ddd",
+    background: "#f5f5f5",
+    cursor: "not-allowed",
+    fontSize: "18px",
+    opacity: 0.5,
+  },
+
   disabledBtn: {
     opacity: 0.5,
-    cursor:  "not-allowed",
+    cursor: "not-allowed",
   },
 };
