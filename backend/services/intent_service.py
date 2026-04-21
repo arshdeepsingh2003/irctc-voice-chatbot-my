@@ -117,7 +117,7 @@ def _extract_train_name(text: str) -> str | None:
         for j in range(i+1, len(words)+1):
             phrase = ' '.join(words[i:j])
             if len(phrase) > 3:  # minimum length
-                matches = difflib.get_close_matches(phrase, all_names, n=1, cutoff=0.7)
+                matches = difflib.get_close_matches(phrase, all_names, n=1, cutoff=0.9)
                 if matches:
                     return matches[0].title()
     
@@ -128,7 +128,7 @@ def _extract_train_keyword(text: str) -> str | None:
     """Extract generic train keyword like 'rajdhani', 'shatabdi', 'express', etc."""
     lower = text.lower()
     # Common train keywords to look for
-    keywords = ['rajdhani', 'shatabdi', 'duronto', 'mail', 'express', 'tejas', 'superfast']
+    keywords = ['rajdhani', 'shatabdi', 'duronto', 'garib', 'tejas', 'superfast']
     for keyword in keywords:
         if keyword in lower:
             return keyword
@@ -152,7 +152,7 @@ def _is_partial_train_name_reference(text: str, train_name: str) -> bool:
     if lower_name in lower_text:
         return False
 
-    stopwords = {"the", "a", "an", "to", "from", "where", "is", "please", "show", "find", "get", "me", "for", "train", "express", "rajdhani", "shatabdi", "duronto", "mail", "tejas", "superfast"}
+    stopwords = {"the", "a", "an", "to", "from", "where", "is", "please", "show", "find", "get", "me", "for", "train", "express", "rajdhani", "shatabdi", "duronto", "garib", "tejas", "superfast"}
     text_words = set(re.findall(r"\b\w+\b", lower_text)) - stopwords
     name_words = set(re.findall(r"\b\w+\b", lower_name)) - stopwords
 
@@ -206,7 +206,7 @@ def _extract_train_selection(text: str, train_options: list | None) -> str | Non
     lower_text = lower.replace(" ", "")
     for train in train_options:
         train_name = train.get("trainName", "").lower().replace(" ", "")
-        if train_name and train_name in lower_text or lower_text in train_name:
+        if train_name and (train_name in lower_text or lower_text in train_name):
             return train.get("trainNo")
     
     return None
@@ -547,8 +547,8 @@ def detect_intent(
         intent = Intent.pnr_status
         confidence = 0.9
 
-    # 🔥 Step 3: PROTECT PREVIOUS TRAIN INFO BEFORE merging
-    if previous_entities and previous_entities.train_number and not _is_explicit_train_reference(message):
+    current_has_train = entities.train_number or entities.train_name
+    if previous_entities and previous_entities.train_number and not _is_explicit_train_reference(message) and not current_has_train:
         entities.train_number = None
         entities.train_name = None
 
@@ -558,8 +558,8 @@ def detect_intent(
     else:
         merged_entities = entities
 
-    # 🔥 Step 3.4: PROTECT PREVIOUS TRAIN INFO
-    if previous_entities and previous_entities.train_number and not entities.train_number and entities.train_name:
+    # 🔥 Step 3.4: PROTECT PREVIOUS TRAIN INFO (only preserve if no new train info)
+    if previous_entities and previous_entities.train_number and not current_has_train:
         if not _is_explicit_train_reference(message):
             merged_entities.train_name = previous_entities.train_name
 
@@ -594,7 +594,18 @@ def detect_intent(
     # 🔥 Step 4: SMART CONTEXT HANDLING (FIXED)
     if previous_intent:
         # If previous intent was incomplete and user is providing missing info, continue with previous intent
-        previous_missing = _find_missing(previous_intent, previous_entities or ExtractedEntities())
+        previous_missing = _find_missing(
+            previous_intent,
+            previous_entities if previous_entities else ExtractedEntities(
+                pnr_number=None,
+                train_number=None,
+                station_from=None,
+                station_to=None,
+                travel_date=None,
+                travel_class=None,
+                train_name=None
+            )
+        )
         if previous_missing and any([
             entities.train_number,
             entities.travel_date,
@@ -617,9 +628,9 @@ def detect_intent(
         not _message_contains_full_train_name(message, merged_entities.train_name)
     )
 
-    if train_keyword and (
+    if train_keyword and not _message_contains_full_train_name(message, merged_entities.train_name or "") and (
         not merged_entities.train_name or
-        merged_entities.train_name.lower() in ['rajdhani', 'shatabdi', 'duronto', 'mail', 'express', 'tejas', 'superfast'] or
+        merged_entities.train_name.lower() in ['rajdhani', 'shatabdi', 'duronto', 'garib', 'tejas', 'superfast'] or
         ambiguous_train_family or
         (merged_entities.train_name and _is_partial_train_name_reference(message, merged_entities.train_name))
     ):
@@ -665,13 +676,10 @@ def detect_intent(
         elif len(matches) == 1:
             # Single match - use it
             merged_entities.train_number = str(matches[0].get("trainNo"))
-    elif merged_entities.train_number:
-        # We have a train number. Check if it exists in the database.
-        # If it doesn't exist, try to find alternatives using the train_name keyword
+    elif merged_entities.train_number and merged_entities.train_name:
         from services.data_service import find_train_by_number, find_trains_by_name_keyword
         train = find_train_by_number(merged_entities.train_number)
-        if not train and merged_entities.train_name:
-            # Train number not found - look for alternatives by name
+        if not train:
             matches = find_trains_by_name_keyword(merged_entities.train_name)
             if len(matches) > 1:
                 # Multiple alternatives found
