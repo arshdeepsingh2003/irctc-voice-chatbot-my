@@ -145,6 +145,23 @@ async def process_chat(request: ChatRequest) -> ChatResponse:
             alert=None
         )
 
+    # ── 2.6 VALIDATE PARTIAL PNR ──────────────────────────────────────
+    if intent_result.intent == Intent.pnr_status:
+        if intent_result.entities.partial_pnr_number and "pnr_number" in intent_result.missing:
+            response_text = "That PNR number is incomplete. Please provide a valid 10-digit PNR number (e.g., 2342556789)."
+            save_message(session_id, "assistant", response_text)
+            return ChatResponse(
+                response_text=response_text,
+                intent=intent_result.intent,
+                data_required="pnr_number",
+                emotion=Emotion.friendly,
+                session_id=session_id,
+                entities=intent_result.entities,
+                is_complete=False,
+                api_data=None,
+                alert=None
+            )
+
     # ── 🚫 3. STOP if incomplete ─────────────────────────────────
     if not intent_result.is_complete:
         followup = build_followup_question(

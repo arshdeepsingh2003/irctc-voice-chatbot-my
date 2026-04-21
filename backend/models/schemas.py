@@ -21,6 +21,7 @@ class Emotion(str, Enum):
 
 class ExtractedEntities(BaseModel):
     pnr_number:   Optional[str] = None
+    partial_pnr_number: Optional[str] = None  # 5-9 digit partial PNR
     train_number: Optional[str] = None
     station_from: Optional[str] = None
     station_to:   Optional[str] = None

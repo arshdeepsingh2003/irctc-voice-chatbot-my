@@ -72,6 +72,20 @@ def _extract_pnr(text: str) -> str | None:
     return None
 
 
+def _extract_partial_pnr(text: str) -> str | None:
+    """Extract partial PNR number (5-9 digits) that is NOT a valid 10-digit PNR."""
+    # First check if there's a valid 10-digit PNR
+    if re.search(r"\b\d{10}\b", text):
+        return None
+
+    # Look for 5-9 digit sequences
+    match = re.search(r"\b\d{5,9}\b", text.replace(" ", ""))
+    if match:
+        return match.group()
+
+    return None
+
+
 def _extract_train_number(text: str) -> str | None:
     """Extract valid Indian train numbers (5 digits only)."""
     
@@ -519,8 +533,19 @@ def detect_intent(
     # Step 1: Extract from current message
     entities = extract_entities(message)
 
+    # 🔥 Step 1.5: DETECT PARTIAL PNR (5-9 digits)
+    partial_pnr = _extract_partial_pnr(message)
+    if partial_pnr:
+        entities.partial_pnr_number = partial_pnr
+
     # 🔥 Step 2: Classify intent FIRST
     intent, confidence = _classify_intent(message)
+
+    # 🔥 Step 2.5: KEEP pnr_status INTENT WHEN PARTIAL PNR DETECTED
+    # If we detect a partial PNR (5-9 digits), force pnr_status intent
+    if partial_pnr:
+        intent = Intent.pnr_status
+        confidence = 0.9
 
     # 🔥 Step 3: PROTECT PREVIOUS TRAIN INFO BEFORE merging
     if previous_entities and previous_entities.train_number and not _is_explicit_train_reference(message):
