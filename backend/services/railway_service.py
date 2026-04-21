@@ -130,6 +130,25 @@ async def fetch_seat_availability(
             error=f"Train {train_number} not found in our database."
         )
 
+    # Validate station route - check if train travels between user-provided stations
+    from_upper = from_station.upper().strip()
+    to_upper = to_station.upper().strip()
+    train_from_code = train.get("fromStnCode", "").upper()
+    train_to_code = train.get("toStnCode", "").upper()
+    train_from_name = train.get("fromStnName", "").upper()
+    train_to_name = train.get("toStnName", "").upper()
+
+    from_valid = from_upper in [train_from_code, train_from_name]
+    to_valid = to_upper in [train_to_code, train_to_name]
+
+    if not from_valid or not to_valid:
+        route_desc = f"{train_from_name} ({train_from_code}) to {train_to_name} ({train_to_code})"
+        return RailwayAPIResult(
+            success=False,
+            intent=Intent.seat_availability,
+            error=f"Train {train_number} does not travel between {from_station} and {to_station}. This train runs from {route_desc}."
+        )
+
     data = get_seat_availability(train_number, travel_class, travel_date)
 
     if not data:

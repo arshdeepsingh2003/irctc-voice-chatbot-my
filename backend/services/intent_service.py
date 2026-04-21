@@ -720,7 +720,7 @@ def build_followup_question(intent: Intent, missing: list[str]) -> str:
     """
     questions = {
         "pnr_number":   "Could you please share your 10-digit PNR number?",
-        "train_number": "Could you share the train number? (e.g., 12301 for Rajdhani Express)",
+        "train_number": "Could you share the train number?",
         "travel_date":  "Please enter today’s date or a future date within 120 days.",
         "travel_class": "Which class? (SL - Sleeper, 3A - Third AC, 2A - Second AC, CC - Chair Car)",
         "station_from": "Which station are you departing from?",
