@@ -5,7 +5,7 @@ from models.schemas import ChatRequest, ChatResponse, HistoryResponse
 from services.chat_service import process_chat, get_history, clear_history
 from services.intent_service import detect_intent
 
-# ✅ NEW IMPORTS (dataset debug)
+from services.guardrail_service import check_message
 from services.data_service import get_dataset_stats, search_trains, get_all_routes
 
 
@@ -102,4 +102,23 @@ def list_routes():
     """List all routes in the dataset."""
     return {
         "routes": get_all_routes()
+    }
+
+class GuardrailTestRequest(BaseModel):
+    message: str
+
+@router.post("/debug/guardrail")
+def test_guardrail(request: GuardrailTestRequest):
+    """
+    Test guardrail without going through full pipeline.
+    Great for tuning keyword lists.
+    """
+    result = check_message(request.message)
+    return {
+        "message":    request.message,
+        "allowed":    result.allowed,
+        "reason":     result.reason,
+        "confidence": result.confidence,
+        "layer":      result.layer,
+        "rejection_message": result.rejection_message,
     }

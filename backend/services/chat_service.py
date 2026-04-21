@@ -1,51 +1,41 @@
-import asyncio
-from typing import Dict, List, Optional
 import re
+from typing import Dict, List, Optional
 
 from models.schemas import (
     ChatRequest, ChatResponse, Message,
     ExtractedEntities, Intent, Emotion
 )
+
+from services.guardrail_service import check_message
 from services.llm_service import get_llm_response
 from services.intent_service import detect_intent, build_followup_question
 from services.railway_service import fetch_railway_data
 from services.formatter_service import format_api_result
 
-# ─── In-memory stores ─────────────────────────────────────────────
+
+# ─── In-memory stores (replace with Redis/DB in production) ───────
 conversation_store: Dict[str, List[Message]] = {}
 entity_store: Dict[str, ExtractedEntities] = {}
 intent_store: Dict[str, Intent] = {}
 
 
+# ─── Date Detection Helper ────────────────────────────────────────
 def _contains_date_reference(text: str) -> bool:
-    """Return True when the user message contains a date-like reference."""
     lower = text.lower()
-    months = (
-        "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug",
-        "sep", "oct", "nov", "dec",
-        "january", "february", "march", "april", "june", "july",
-        "august", "september", "october", "november", "december"
-    )
 
-    if any(keyword in lower for keyword in ["today", "tomorrow", "day after", "tonight"]):
+    if any(k in lower for k in ["today", "tomorrow", "day after", "tonight"]):
         return True
 
     if re.search(r"\b\d{1,2}[\/\-]\d{1,2}(?:[\/\-]\d{2,4})?\b", lower):
         return True
+
     if re.search(r"\b\d{4}-\d{2}-\d{2}\b", lower):
         return True
-
-    for month_name in months:
-        if re.search(rf"\b\d{{1,2}}(?:st|nd|rd|th)?\s+{month_name}\b", lower):
-            return True
-        if re.search(rf"\b{month_name}\s+\d{{1,2}}(?:st|nd|rd|th)?\b", lower):
-            return True
 
     return False
 
 
-# ─── Helpers ──────────────────────────────────────────────────────
-
+# ─── Memory Helpers ──────────────────────────────────────────────
 def get_history(session_id: str) -> List[Message]:
     return conversation_store.get(session_id, [])
 
@@ -78,60 +68,109 @@ def save_intent(session_id: str, intent: Intent):
     intent_store[session_id] = intent
 
 
-# ─── Main pipeline ────────────────────────────────────────────────
-
+# ─── MAIN PIPELINE ───────────────────────────────────────────────
 async def process_chat(request: ChatRequest) -> ChatResponse:
-    """
-    Hybrid pipeline (BEST PRACTICE):
-
-    1. Intent detection + entity extraction
-    2. STOP if incomplete
-    3. Call Railway API
-    4. Format API result
-    5. Send structured + raw data to LLM
-    6. Return enriched response
-    """
 
     session_id = request.session_id or "default"
     user_message = request.message.strip()
 
-    # ── 1. Intent Detection ───────────────────────────────────────
+    # ══════════════════════════════════════════════════════════════
+    # 🛡️ INPUT GUARDRAIL
+    # ══════════════════════════════════════════════════════════════
+    guardrail = check_message(user_message)
+
+    if not guardrail.allowed:
+        print(f"🚫 Blocked: {guardrail.reason} | layer: {guardrail.layer}")
+
+        return ChatResponse(
+            response_text=guardrail.rejection_message,
+            intent=Intent.general_query,
+            data_required="none",
+            emotion=Emotion.friendly,
+            session_id=session_id,
+            entities=None,
+            is_complete=False,
+            api_data=None,
+            alert=None,
+            suggestions=[
+                "Check PNR status",
+                "Check train running status",
+                "Check seat availability"
+            ]
+        )
+
+    # ── Save user message FIRST (fix history bug) ─────────────────
+    save_message(session_id, "user", user_message)
+    history = get_history(session_id)
+
+    # ── GREETING CHECK ──────────────────────────────────────────
+    greeting_patterns = [
+        r"^(hi|hello|hey|namaste|namaskar|hlo|hii)[\s!.,]*$",
+        r"^(good\s*(morning|evening|afternoon|night))[\s!.,]*$",
+    ]
+    is_greeting = any(
+        re.match(p, user_message.lower().strip()) 
+        for p in greeting_patterns
+    )
+
+    if is_greeting:
+        response_text = (
+            "Namaste! 🙏 I'm RailBot, your Indian Railways assistant. "
+            "I can help you with PNR status, train running status, seat availability, "
+            "and more. How can I help you today?"
+        )
+        save_message(session_id, "assistant", response_text)
+        return ChatResponse(
+            response_text=response_text,
+            intent=Intent.general_query,
+            data_required="none",
+            emotion=Emotion.friendly,
+            session_id=session_id,
+            entities=None,
+            is_complete=True,
+            api_data=None,
+            alert=None
+        )
+
+    # ── Intent Detection ─────────────────────────────────────────
     previous_entities = get_previous_entities(session_id)
     previous_intent = get_previous_intent(session_id)
+
     intent_result = detect_intent(
         message=user_message,
         previous_entities=previous_entities,
         previous_intent=previous_intent
     )
 
-    print(f"\n🎯 Intent: {intent_result.intent} ({intent_result.confidence})")
-    print(f"Entities: {intent_result.entities.model_dump(exclude_none=True)}")
-    print(f"Missing: {intent_result.missing}")
-    print(f"train_options present: {intent_result.train_options is not None}")
+    print(f"\n🎯 Intent: {intent_result.intent}")
+    print(f"📦 Entities: {intent_result.entities.model_dump(exclude_none=True)}")
+    print(f"❓ Missing: {intent_result.missing}")
 
-    # ── 2. Save state ────────────────────────────────────────────
+    # ── Save state safely ────────────────────────────────────────
     save_entities(session_id, intent_result.entities)
     save_intent(session_id, intent_result.intent)
-    print(f"Saved entities: train_options={intent_result.entities.train_options is not None}")
-    # Also preserve train_options in entities for next turn
-    if intent_result.train_options:
-        saved_entities = get_previous_entities(session_id)
-        saved_entities.train_options = intent_result.train_options
-        save_entities(session_id, saved_entities)
-        print("Re-saved with train_options")
-    history = get_history(session_id)
-    save_message(session_id, "user", user_message)
 
-    # ── 🚫 2.5 CHECK FOR MULTIPLE TRAIN OPTIONS ─────────────────
+    # ── Preserve train options safely ────────────────────────────
     if intent_result.train_options:
-        # Multiple trains match the keyword - ask user to choose
+        saved = get_previous_entities(session_id) or intent_result.entities
+        saved = saved.model_copy(deep=True)
+        saved.train_options = intent_result.train_options
+        save_entities(session_id, saved)
+
+    # ── MULTI TRAIN SELECTION ────────────────────────────────────
+    if intent_result.train_options:
         options_list = "\n".join([
-            f"{i+1}. {opt['trainName']} ({opt['trainNo']}) - {opt['fromStnName']} to {opt['toStnName']}"
+            f"{i+1}. {opt['trainName']} ({opt['trainNo']}) - "
+            f"{opt['fromStnName']} to {opt['toStnName']}"
             for i, opt in enumerate(intent_result.train_options)
         ])
-        response_text = f"I found multiple {intent_result.entities.train_name} trains. Please choose one:\n{options_list}"
-        
+
+        response_text = (
+            f"I found multiple matches. Please choose one:\n{options_list}"
+        )
+
         save_message(session_id, "assistant", response_text)
+
         return ChatResponse(
             response_text=response_text,
             intent=intent_result.intent,
@@ -145,132 +184,105 @@ async def process_chat(request: ChatRequest) -> ChatResponse:
             alert=None
         )
 
-    # ── 2.6 VALIDATE PARTIAL PNR ──────────────────────────────────────
+    # ── PARTIAL PNR VALIDATION ───────────────────────────────────
     if intent_result.intent == Intent.pnr_status:
-        if intent_result.entities.partial_pnr_number and "pnr_number" in intent_result.missing:
-            response_text = "That PNR number is incomplete. Please provide a valid 10-digit PNR number (e.g., 2342556789)."
-            save_message(session_id, "assistant", response_text)
+        if intent_result.entities.partial_pnr_number:
             return ChatResponse(
-                response_text=response_text,
+                response_text="Please provide a valid 10-digit PNR number.",
                 intent=intent_result.intent,
                 data_required="pnr_number",
                 emotion=Emotion.friendly,
                 session_id=session_id,
                 entities=intent_result.entities,
-                is_complete=False,
-                api_data=None,
-                alert=None
+                is_complete=False
             )
 
-    # ── 🚫 3. STOP if incomplete ─────────────────────────────────
+    # ── STOP IF INCOMPLETE ───────────────────────────────────────
     if not intent_result.is_complete:
         followup = build_followup_question(
             intent_result.intent,
             intent_result.missing
         )
 
-        # Special handling for invalid travel date
         if "travel_date" in intent_result.missing and _contains_date_reference(user_message):
-            response_text = "That date is invalid. Please enter today's date or a future date within 120 days."
+            response_text = "Invalid date. Please enter a valid future date."
         else:
-            response_text = followup or "Please provide the required details."
+            response_text = followup or "Please provide required details."
 
         save_message(session_id, "assistant", response_text)
 
         return ChatResponse(
             response_text=response_text,
             intent=intent_result.intent,
-            data_required=", ".join(intent_result.missing) if intent_result.missing else "none",
+            data_required=", ".join(intent_result.missing),
             emotion=Emotion.friendly,
             session_id=session_id,
             entities=intent_result.entities,
-            is_complete=False,
-            api_data=None,
-            alert=None
+            is_complete=False
         )
 
-    # ── 4. Call Railway API ──────────────────────────────────────
-    api_result = None
-    formatted_context = None
-
-    if intent_result.intent not in [
-        Intent.general_query, Intent.error, Intent.unknown
-    ]:
-        print(f"🚂 Calling Railway API for: {intent_result.intent}")
-
-        api_result = await fetch_railway_data(
-            intent=intent_result.intent,
-            entities=intent_result.entities
-        )
-
-        print(f"📡 API result: success={api_result.success}")
-
-        # ── 5. Format API result ─────────────────────────────────
-        formatted_context = format_api_result(api_result)
-
-        if formatted_context:
-            print(f"📋 Summary: {formatted_context.summary[:100]}...")
-            print(f"😊 Emotion: {formatted_context.emotion}")
-
-    # ── 6. Build enriched prompt ────────────────────────────────
-    enriched_prompt = _build_enriched_prompt(
-        message=user_message,
-        intent_result=intent_result,
-        api_result=api_result,
-        ctx=formatted_context
+    # ── CALL API ────────────────────────────────────────────────
+    api_result = await fetch_railway_data(
+        intent=intent_result.intent,
+        entities=intent_result.entities
     )
 
-    # ── 7. Get LLM response ─────────────────────────────────────
+    formatted_context = None
+
+    if api_result:
+        formatted_context = format_api_result(api_result)
+
+    # ── BUILD PROMPT ─────────────────────────────────────────────
+    enriched_prompt = _build_enriched_prompt(
+        user_message,
+        intent_result,
+        api_result,
+        formatted_context
+    )
+
+    # ── LLM CALL ────────────────────────────────────────────────
     llm_response = get_llm_response(
         user_message=enriched_prompt,
         history=history,
         session_id=session_id
     )
 
-    # ── 8. Apply formatter emotion (if available) ───────────────
-    if formatted_context:
-        llm_response.emotion = formatted_context.emotion
+    # ── OUTPUT GUARDRAIL (optional) ─────────────────────────────
+    out_guardrail = check_message(llm_response.response_text)
+    if not out_guardrail.allowed:
+        llm_response.response_text = (
+            "I can only help with railway-related queries."
+        )
 
-    # ── 9. Attach metadata ──────────────────────────────────────
+    # ── Attach metadata ─────────────────────────────────────────
     llm_response.intent = intent_result.intent
     llm_response.entities = intent_result.entities
     llm_response.is_complete = True
     llm_response.data_required = "none"
-
-    llm_response.api_data = (
-        api_result.data if api_result else None
-    )
-
-
+    llm_response.api_data = api_result.data if api_result else None
     llm_response.alert = (
         formatted_context.alert if formatted_context else None
     )
 
-    # ── 10. Save assistant reply ────────────────────────────────
+    if formatted_context:
+        llm_response.emotion = formatted_context.emotion
+
+    # ── Save assistant response ─────────────────────────────────
     save_message(session_id, "assistant", llm_response.response_text)
 
     return llm_response
 
 
-# ─── Prompt Builder ──────────────────────────────────────────────
-
-def _build_enriched_prompt(
-    message: str,
-    intent_result,
-    api_result,
-    ctx
-) -> str:
-    """Build a SAFE + STRUCTURED + RICH prompt for LLM."""
+# ─── PROMPT BUILDER ─────────────────────────────────────────────
+def _build_enriched_prompt(message, intent_result, api_result, ctx) -> str:
 
     parts = [f'User asked: "{message}"']
     parts.append(f"Intent: {intent_result.intent.value}")
 
-    # ── Entities ────────────────────────────────────────────────
     entities = intent_result.entities.model_dump(exclude_none=True)
     if entities:
-        parts.append(f"Extracted entities: {entities}")
+        parts.append(f"Entities: {entities}")
 
-    # ── Formatted Context (BEST SIGNAL) ─────────────────────────
     if ctx:
         parts.append(f"\nSUMMARY: {ctx.summary}")
         parts.append(f"KEY_FACTS: {ctx.key_facts}")
@@ -278,22 +290,15 @@ def _build_enriched_prompt(
         if ctx.alert:
             parts.append(f"ALERT: {ctx.alert}")
 
-    
-
         parts.append(f"EMOTION_HINT: {ctx.emotion.value}")
 
-    # ── Raw API fallback ───────────────────────────────────────
     elif api_result:
-        if api_result.success and api_result.data:
+        if api_result.success:
             parts.append(f"API_DATA: {api_result.data}")
         else:
             parts.append(f"API_ERROR: {api_result.error}")
 
-    # ── Safety guard ───────────────────────────────────────────
     else:
-        parts.append(
-            "IMPORTANT: No API data available. "
-            "Do NOT assume or generate any train details."
-        )
+        parts.append("No API data available. Do not assume details.")
 
     return "\n".join(parts)
