@@ -184,19 +184,6 @@ async def process_chat(request: ChatRequest) -> ChatResponse:
             alert=None
         )
 
-    # ── PARTIAL PNR VALIDATION ───────────────────────────────────
-    if intent_result.intent == Intent.pnr_status:
-        if intent_result.entities.partial_pnr_number:
-            return ChatResponse(
-                response_text="Please provide a valid 10-digit PNR number.",
-                intent=intent_result.intent,
-                data_required="pnr_number",
-                emotion=Emotion.friendly,
-                session_id=session_id,
-                entities=intent_result.entities,
-                is_complete=False
-            )
-
     # ── STOP IF INCOMPLETE ───────────────────────────────────────
     if not intent_result.is_complete:
         followup = build_followup_question(

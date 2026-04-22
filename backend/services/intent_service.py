@@ -72,20 +72,6 @@ def _extract_pnr(text: str) -> str | None:
     return None
 
 
-def _extract_partial_pnr(text: str) -> str | None:
-    """Extract partial PNR number (5-9 digits) that is NOT a valid 10-digit PNR."""
-    # First check if there's a valid 10-digit PNR
-    if re.search(r"\b\d{10}\b", text):
-        return None
-
-    # Look for 5-9 digit sequences
-    match = re.search(r"\b\d{5,9}\b", text.replace(" ", ""))
-    if match:
-        return match.group()
-
-    return None
-
-
 def _extract_train_number(text: str) -> str | None:
     """Extract valid Indian train numbers (5 digits only)."""
     
@@ -117,7 +103,7 @@ def _extract_train_name(text: str) -> str | None:
         for j in range(i+1, len(words)+1):
             phrase = ' '.join(words[i:j])
             if len(phrase) > 3:  # minimum length
-                matches = difflib.get_close_matches(phrase, all_names, n=1, cutoff=0.9)
+                matches = difflib.get_close_matches(phrase, all_names, n=1, cutoff=0.7)
                 if matches:
                     return matches[0].title()
     
@@ -162,6 +148,21 @@ def _is_partial_train_name_reference(text: str, train_name: str) -> bool:
 def _message_contains_full_train_name(text: str, train_name: str) -> bool:
     """Return True when the user message contains the exact full train name."""
     return train_name.lower() in text.lower()
+
+
+def _wants_different_train(text: str) -> bool:
+    """Return True when user wants to check a different/other train."""
+    lower = text.lower()
+    other_patterns = [
+        r"\bother\b", r"\bdifferent\b", r"\banother\b",
+        r"\bnew\b", r"\bnext\b", r"\bother train\b",
+        r"\bdifferent train\b", r"\bany other\b", r"\bsome other\b",
+        r"\bwant to check\b.*\bother\b", r"\bcheck\b.*\bother\b",
+    ]
+    for pattern in other_patterns:
+        if re.search(pattern, lower):
+            return True
+    return False
 
 
 def _extract_train_selection(text: str, train_options: list | None) -> str | None:
@@ -546,19 +547,16 @@ def detect_intent(
     # Step 1: Extract from current message
     entities = extract_entities(message)
 
-    # 🔥 Step 1.5: DETECT PARTIAL PNR (5-9 digits)
-    partial_pnr = _extract_partial_pnr(message)
-    if partial_pnr:
-        entities.partial_pnr_number = partial_pnr
-
     # 🔥 Step 2: Classify intent FIRST
     intent, confidence = _classify_intent(message)
 
-    # 🔥 Step 2.5: KEEP pnr_status INTENT WHEN PARTIAL PNR DETECTED
-    # If we detect a partial PNR (5-9 digits), force pnr_status intent
-    if partial_pnr:
-        intent = Intent.pnr_status
-        confidence = 0.9
+    # 🔥 Step 2.5: CLEAR PREVIOUS TRAIN INFO IF USER WANTS DIFFERENT TRAIN
+    if previous_entities and _wants_different_train(message):
+        if intent == Intent.seat_availability:
+            entities.train_number = None
+            entities.train_name = None
+            entities.station_from = None
+            entities.station_to = None
 
     current_has_train = entities.train_number or entities.train_name
     if previous_entities and previous_entities.train_number and not _is_explicit_train_reference(message) and not current_has_train:
