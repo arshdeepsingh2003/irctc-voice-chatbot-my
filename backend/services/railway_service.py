@@ -131,22 +131,32 @@ async def fetch_seat_availability(
         )
 
     # Validate station route - check if train travels between user-provided stations
-    from_upper = from_station.upper().strip()
-    to_upper = to_station.upper().strip()
+    from_input = from_station.upper().strip()
+    to_input = to_station.upper().strip()
     train_from_code = train.get("fromStnCode", "").upper()
     train_to_code = train.get("toStnCode", "").upper()
     train_from_name = train.get("fromStnName", "").upper()
     train_to_name = train.get("toStnName", "").upper()
 
-    from_valid = from_upper in [train_from_code, train_from_name]
-    to_valid = to_upper in [train_to_code, train_to_name]
+    from_valid = from_input in [train_from_code, train_from_name]
+    to_valid = to_input in [train_to_code, train_to_name]
 
     if not from_valid or not to_valid:
-        route_desc = f"{train_from_name} ({train_from_code}) to {train_to_name} ({train_to_code})"
+        train_data = {
+            "train_number": train_number,
+            "train_name": train.get("trainName"),
+            "from_station": train.get("fromStnCode"),
+            "from_station_name": train.get("fromStnName"),
+            "to_station": train.get("toStnCode"),
+            "to_station_name": train.get("toStnName"),
+            "invalid_from": from_station if not from_valid else None,
+            "invalid_to": to_station if not to_valid else None,
+        }
         return RailwayAPIResult(
             success=False,
             intent=Intent.seat_availability,
-            error=f"Train {train_number} does not travel between {from_station} and {to_station}. This train runs from {route_desc}."
+            error="STATION_VALIDATION_FAILED",
+            data=train_data
         )
 
     data = get_seat_availability(train_number, travel_class, travel_date)

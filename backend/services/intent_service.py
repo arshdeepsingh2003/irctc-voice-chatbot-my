@@ -350,6 +350,8 @@ def _extract_stations(text: str) -> tuple[str | None, str | None]:
       - "from Delhi to Mumbai"
       - "Delhi to Mumbai"
       - "NDLS to CSTM"
+      - "tell for Delhi to Mumbai"
+      - "check Delhi to Mumbai"
     """
     # Look for "from X to Y" first
     match = re.search(
@@ -357,16 +359,27 @@ def _extract_stations(text: str) -> tuple[str | None, str | None]:
         text, re.IGNORECASE
     )
     if not match:
-        # Fallback: plain "X to Y"
+        # Handle "tell for X to Y" or "check for X to Y"
         match = re.search(
-            r"\b([A-Za-z][A-Za-z0-9 ]+?)\s+to\s+([A-Za-z][A-Za-z0-9 ]+?)(?:\s+on|\s+in|\s+for|$|\.|,)",
+            r"(?:tell|check|show|get)\s+for\s+([a-zA-Z][a-zA-Z0-9 ]+?)\s+to\s+([a-zA-Z][a-zA-Z0-9 ]+?)(?:\s+on|\s+in|$|\.|,)",
+            text, re.IGNORECASE
+        )
+    if not match:
+        # Handle "tell/check X to Y" (without "for")
+        match = re.search(
+            r"(?:tell|check|show|get|about|is|are|can|could)\s+(?:me\s+)?(?:the\s+)?([a-zA-Z][a-zA-Z0-9 ]+?)\s+to\s+([a-zA-Z][a-zA-Z0-9 ]+?)(?:\s+on|\s+in|\s+for|$|\.|,)",
+            text, re.IGNORECASE
+        )
+    if not match:
+        # Plain "X to Y"
+        match = re.search(
+            r"([a-zA-Z][a-zA-Z0-9 ]+?)\s+to\s+([a-zA-Z][a-zA-Z0-9 ]+?)(?:\s+on|\s+in|$|\.|,)",
             text, re.IGNORECASE
         )
     if match:
         src = match.group(1).strip().upper()
         dst = match.group(2).strip().upper()
-        # Filter out noise words - check if any word is noise
-        noise = {"THE", "TRAIN", "A", "AN", "CHECK", "GET", "FIND", "SEAT", "I", "WANT", "TO", "AVAIALBILITY", "AVAILABILITY"}
+        noise = {"THE", "TRAIN", "A", "AN", "CHECK", "GET", "FIND", "SEAT", "I", "WANT", "TO", "AVAIALBILITY", "AVAILABILITY", "ME", "THE", "ABOUT", "IS", "ARE", "CAN", "COULD", "WILL", "WOULD", "SHOULD", "DO", "DOES", "DID", "HAS", "HAVE", "HAD", "FOR", "TELL", "SHOW", "CHECK", "THIS", "THAT", "THESE", "THOSE"}
         src_words = set(src.split())
         dst_words = set(dst.split())
         src = src if not src_words & noise and len(src) > 1 else None

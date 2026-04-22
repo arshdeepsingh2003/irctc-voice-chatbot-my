@@ -227,6 +227,39 @@ async def process_chat(request: ChatRequest) -> ChatResponse:
         entities=intent_result.entities
     )
 
+    # ── HANDLE STATION VALIDATION ERROR ───────────────────────
+    if (not api_result.success and 
+        api_result.error == "STATION_VALIDATION_FAILED" and
+        intent_result.intent == Intent.seat_availability):
+        
+        train_data = api_result.data or {}
+        from_stn_name = train_data.get("from_station_name", "")
+        to_stn_name = train_data.get("to_station_name", "")
+        
+        response_text = (
+            f"This train runs from {from_stn_name} to {to_stn_name}. "
+            "Please enter valid source and destination stations."
+        )
+        
+        save_message(session_id, "assistant", response_text)
+        
+        entities = intent_result.entities.model_copy(deep=True)
+        entities.station_from = None
+        entities.station_to = None
+        save_entities(session_id, entities)
+        
+        return ChatResponse(
+            response_text=response_text,
+            intent=Intent.seat_availability,
+            data_required="station_from,station_to",
+            emotion=Emotion.friendly,
+            session_id=session_id,
+            entities=entities,
+            is_complete=False,
+            api_data=None,
+            alert=None
+        )
+
     formatted_context = None
 
     if api_result:
