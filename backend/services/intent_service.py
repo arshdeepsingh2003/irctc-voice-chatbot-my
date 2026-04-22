@@ -147,6 +147,8 @@ def _is_partial_train_name_reference(text: str, train_name: str) -> bool:
 
 def _message_contains_full_train_name(text: str, train_name: str) -> bool:
     """Return True when the user message contains the exact full train name."""
+    if not train_name:
+        return False
     return train_name.lower() in text.lower()
 
 
@@ -587,8 +589,8 @@ def detect_intent(
                 if train_opt.get("trainNo") == selected_train_num:
                     merged_entities.train_name = train_opt.get("trainName")
                     break
-            # User selected a train - continue with train status flow
-            intent = Intent.train_status
+            # User selected a train - continue with previous intent (e.g., seat_availability)
+            intent = previous_intent if previous_intent else intent
             # Clear train_options since user has selected
             merged_entities.train_options = None
     

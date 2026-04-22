@@ -139,7 +139,9 @@ export default function App() {
                   
                     {msg.entities && Object.values(msg.entities).some(Boolean) && (
                       <div className="entities">
-                        🔍 {Object.entries(msg.entities).filter(([,v]) => v).map(([k,v]) => `${k}: ${v}`).join(" · ")}
+                        🔍 {Object.entries(msg.entities)
+                          .filter(([,v]) => v && typeof v !== 'object')
+                          .map(([k,v]) => `${k}: ${v}`).join(" · ")}
                       </div>
                     )}
                   </div>
